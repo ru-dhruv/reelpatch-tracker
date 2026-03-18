@@ -257,6 +257,8 @@ body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-he
 <main class="main" id="main"><p style="color:var(--muted);font-size:13px;padding:40px;">Loading…</p></main>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
 
 const PHASES = [
@@ -1064,8 +1066,39 @@ const PHASES = [
 
 let progress = {}, currentPhase = 'p1';
 
-function loadProgress(){try{const r=localStorage.getItem('reelpatch_progress');return r?JSON.parse(r):{}}catch{return {}}}
-function saveProgress(p){try{localStorage.setItem('reelpatch_progress',JSON.stringify(p))}catch{}}
+// Firebase Firestore sync
+firebase.initializeApp({
+  apiKey:            'AIzaSyA9JwzJWaVLp98dD1V0_Q-V2vQiORNtMoY',
+  authDomain:        'reelpatch-tracker.firebaseapp.com',
+  projectId:         'reelpatch-tracker',
+  storageBucket:     'reelpatch-tracker.firebasestorage.app',
+  messagingSenderId: '11614711135',
+  appId:             '1:11614711135:web:26e0c7d7a5fdabc5f9daea'
+});
+const _db  = firebase.firestore();
+const _ref = _db.collection('tracker').doc('dhruv');
+
+async function loadProgress() {
+  try {
+    const snap = await _ref.get();
+    if (snap.exists) {
+      const data = snap.data().progress || {};
+      localStorage.setItem('rp_progress', JSON.stringify(data));
+      return data;
+    }
+  } catch(e) { console.warn('Firebase load failed, using localStorage fallback'); }
+  try { const r = localStorage.getItem('rp_progress'); return r ? JSON.parse(r) : {}; } catch { return {}; }
+}
+
+let _saveTimer = null;
+function saveProgress(p) {
+  try { localStorage.setItem('rp_progress', JSON.stringify(p)); } catch {}
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(async () => {
+    try { await _ref.set({ progress: p }); }
+    catch(e) { console.warn('Firebase save failed, localStorage backup active'); }
+  }, 800);
+}
 
 function counts(phId){const ph=PHASES.find(p=>p.id===phId);let d=0,t=0;for(const w of ph.weeks)for(const tk of w.tasks){t++;if(progress[key(phId,w,tk)])d++;}return{d,t};}
 function key(phId,wk,tk){return`${phId}||${wk.tag}||${tk.title}`;}
@@ -1250,11 +1283,11 @@ function toggleTask(phId,wi,ti){
   renderNav();updateOverall();
 }
 
-function confirmReset(){
+async function confirmReset(){
   if(confirm('Reset all progress?')){progress={};saveProgress(progress);renderNav();renderMain();updateOverall();}
 }
 
-function init(){progress=loadProgress();renderNav();renderMain();updateOverall();}
+async function init(){progress=await loadProgress();renderNav();renderMain();updateOverall();}
 init();
 </script>
 </body>
