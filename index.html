@@ -154,13 +154,44 @@ body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-he
 @media(max-width:900px){
   .main{padding:24px 28px;}
 }
+/* MOBILE TOPBAR + HAMBURGER DRAWER */
+.mobile-bar{display:none;}
+.drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;}
+.drawer{position:fixed;top:0;left:0;height:100%;width:280px;background:var(--bg2);z-index:101;transform:translateX(-100%);transition:transform 0.25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow-y:auto;}
+.drawer.open{transform:translateX(0);}
+.drawer-overlay.open{display:block;}
+.drawer-header{padding:20px 22px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.drawer-logo{font-size:17px;font-weight:800;color:var(--accent);letter-spacing:-0.02em;}
+.drawer-close{width:32px;height:32px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:color 0.12s;}
+.drawer-close:hover{color:var(--text);}
+.drawer-progress{padding:14px 22px;border-bottom:1px solid var(--border);}
+.drawer-pct{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.03em;line-height:1.2;}
+.drawer-bar{height:3px;background:var(--bg4);border-radius:2px;margin:8px 0 6px;overflow:hidden;}
+.drawer-bar-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.5s cubic-bezier(.4,0,.2,1);}
+.drawer-counts{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);display:flex;justify-content:space-between;line-height:1.6;}
+.drawer-nav{flex:1;padding:8px 0;}
+.drawer-item{display:flex;align-items:center;gap:12px;padding:13px 22px;cursor:pointer;border-left:2px solid transparent;transition:background 0.12s;}
+.drawer-item:hover{background:var(--bg3);}
+.drawer-item.active{background:var(--bg3);}
+.drawer-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.drawer-item-body{flex:1;min-width:0;}
+.drawer-item-name{font-size:13px;font-weight:600;line-height:1.5;}
+.drawer-item-meta{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);margin-top:2px;line-height:1.5;}
+.drawer-item-bar{height:2px;background:var(--bg4);border-radius:1px;margin-top:6px;}
+.drawer-item-fill{height:100%;border-radius:1px;transition:width 0.4s;}
+.drawer-foot{padding:14px 22px;border-top:1px solid var(--border);}
+.drawer-reset{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted2);background:none;border:none;cursor:pointer;letter-spacing:0.05em;line-height:1.6;}
+
 @media(max-width:680px){
+  .sidebar{display:none;}
+  .mobile-bar{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;}
+  .mob-logo{font-size:15px;font-weight:800;color:var(--accent);letter-spacing:-0.02em;flex-shrink:0;}
+  .mob-center{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-end;padding-right:4px;}
+  .mob-phase{font-size:11px;font-weight:600;color:var(--muted);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
+  .mob-progress{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted2);line-height:1.5;}
+  .mob-hamburger{width:36px;height:36px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;flex-shrink:0;margin-left:auto;}
+  .mob-hamburger span{display:block;width:18px;height:1.5px;background:var(--text);border-radius:1px;}
   .app{flex-direction:column;}
-  .sidebar{width:100%;height:auto;position:static;flex-shrink:0;}
-  .logo,.overall,.sb-foot{display:none;}
-  .nav{display:flex;flex-direction:row;padding:10px;gap:6px;overflow-x:auto;}
-  .nav-item{padding:8px 12px;border-radius:8px;border-left:none;flex-shrink:0;}
-  .ni-bar{display:none;}
   .main{padding:16px;}
   .main-inner{max-width:100%;}
 }
@@ -179,6 +210,35 @@ body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-he
 </head>
 <body>
 <div class="app">
+
+<!-- Mobile top bar -->
+<div class="mobile-bar">
+  <span class="mob-logo">ReelPatch</span>
+  <div class="mob-center">
+    <span class="mob-phase" id="mob-phase">01 — Bare Minimum MVP</span>
+    <span class="mob-progress" id="mob-progress">0%</span>
+  </div>
+  <div class="mob-hamburger" onclick="openDrawer()" aria-label="Open menu">
+    <span></span><span></span><span></span>
+  </div>
+</div>
+
+<!-- Drawer overlay + panel -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <span class="drawer-logo">ReelPatch</span>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-progress">
+    <div class="drawer-pct" id="drawer-pct">0%</div>
+    <div class="drawer-bar"><div class="drawer-bar-fill" id="drawer-bar" style="width:0%"></div></div>
+    <div class="drawer-counts"><span id="drawer-done">0 done</span><span id="drawer-total">— tasks</span></div>
+  </div>
+  <div class="drawer-nav" id="drawer-nav"></div>
+  <div class="drawer-foot"><button class="drawer-reset" onclick="confirmReset()">↺ reset all progress</button></div>
+</div>
+
 <nav class="sidebar">
   <div class="logo">
     <div class="logo-mark">ReelPatch</div>
@@ -1004,31 +1064,67 @@ const PHASES = [
 
 let progress = {}, currentPhase = 'p1';
 
-async function loadProgress(){try{const r=await window.storage.get('rp2_progress');return r?JSON.parse(r.value):{}}catch{return {}}}
-async function saveProgress(p){try{await window.storage.set('rp2_progress',JSON.stringify(p))}catch{}}
+function loadProgress(){try{const r=localStorage.getItem('reelpatch_progress');return r?JSON.parse(r):{}}catch{return {}}}
+function saveProgress(p){try{localStorage.setItem('reelpatch_progress',JSON.stringify(p))}catch{}}
 
 function counts(phId){const ph=PHASES.find(p=>p.id===phId);let d=0,t=0;for(const w of ph.weeks)for(const tk of w.tasks){t++;if(progress[key(phId,w,tk)])d++;}return{d,t};}
 function key(phId,wk,tk){return`${phId}||${wk.tag}||${tk.title}`;}
 function allCounts(){let d=0,t=0;for(const ph of PHASES){const c=counts(ph.id);d+=c.d;t+=c.t;}return{d,t};}
 
+function openDrawer(){
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+
 function renderNav(){
   const nav=document.getElementById('nav');
+  const drawerNav=document.getElementById('drawer-nav');
   nav.innerHTML='';
+  if(drawerNav) drawerNav.innerHTML='';
   PHASES.forEach(ph=>{
     const{d,t}=counts(ph.id);
     const pct=t?Math.round(d/t*100):0;
-    const el=document.createElement('div');
-    el.className='nav-item'+(ph.id===currentPhase?' active':'');
-    el.style.borderLeftColor=ph.id===currentPhase?ph.color:'transparent';
-    el.innerHTML=`<div class="ni-dot" style="background:${ph.color}"></div>
+    const isActive=ph.id===currentPhase;
+    const innerHtml=`<div class="ni-dot" style="background:${ph.color}"></div>
     <div class="ni-body">
-      <div class="ni-name" style="color:${ph.id===currentPhase?ph.color:'var(--text)'}">${ph.num} — ${ph.name}</div>
+      <div class="ni-name" style="color:${isActive?ph.color:'var(--text)'}">${ph.num} — ${ph.name}</div>
       <div class="ni-meta">${d}/${t} · ${pct}%</div>
       <div class="ni-bar"><div class="ni-bfill" style="width:${pct}%;background:${ph.color}"></div></div>
     </div>`;
+    // Sidebar nav item
+    const el=document.createElement('div');
+    el.className='nav-item'+(isActive?' active':'');
+    el.style.borderLeftColor=isActive?ph.color:'transparent';
+    el.innerHTML=innerHtml;
     el.onclick=()=>{currentPhase=ph.id;renderNav();renderMain();document.getElementById('main').scrollTop=0;};
     nav.appendChild(el);
+    // Drawer nav item
+    if(drawerNav){
+      const del=document.createElement('div');
+      del.className='drawer-item'+(isActive?' active':'');
+      del.style.borderLeftColor=isActive?ph.color:'transparent';
+      del.innerHTML=`<div class="drawer-dot" style="background:${ph.color}"></div>
+      <div class="drawer-item-body">
+        <div class="drawer-item-name" style="color:${isActive?ph.color:'var(--text)'}">${ph.num} — ${ph.name}</div>
+        <div class="drawer-item-meta">${d}/${t} · ${pct}%</div>
+        <div class="drawer-item-bar"><div class="drawer-item-fill" style="width:${pct}%;background:${ph.color}"></div></div>
+      </div>`;
+      del.onclick=()=>{currentPhase=ph.id;closeDrawer();renderNav();renderMain();window.scrollTo(0,0);};
+      drawerNav.appendChild(del);
+    }
   });
+  // Update mobile bar current phase label
+  const mobPhase=document.getElementById('mob-phase');
+  if(mobPhase){
+    const cur=PHASES.find(p=>p.id===currentPhase);
+    mobPhase.textContent=cur.num+' — '+cur.name;
+  }
 }
 
 function updateOverall(){
@@ -1038,6 +1134,17 @@ function updateOverall(){
   document.getElementById('ov-bar').style.width=pct+'%';
   document.getElementById('ov-done').textContent=d+' done';
   document.getElementById('ov-total').textContent=t+' tasks';
+  // Update drawer
+  const dp=document.getElementById('drawer-pct');
+  const db=document.getElementById('drawer-bar');
+  const dd=document.getElementById('drawer-done');
+  const dt=document.getElementById('drawer-total');
+  const mp=document.getElementById('mob-progress');
+  if(dp) dp.textContent=pct+'%';
+  if(db) db.style.width=pct+'%';
+  if(dd) dd.textContent=d+' done';
+  if(dt) dt.textContent=t+' tasks';
+  if(mp) mp.textContent=pct+'%';
 }
 
 function renderMain(){
@@ -1147,7 +1254,7 @@ function confirmReset(){
   if(confirm('Reset all progress?')){progress={};saveProgress(progress);renderNav();renderMain();updateOverall();}
 }
 
-async function init(){progress=await loadProgress();renderNav();renderMain();updateOverall();}
+function init(){progress=loadProgress();renderNav();renderMain();updateOverall();}
 init();
 </script>
 </body>
