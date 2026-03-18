@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReelPatch — Learning & Build Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0e10; --bg2: #131619; --bg3: #191d21; --bg4: #20252b;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
+  --text: #e6e4de; --muted: #787570; --muted2: #525050;
+  --accent: #e2f04a; --accent2: #bfd130;
+  --p1: #34d399; --p2: #60a5fa; --p3: #fb923c; --p4: #f472b6; --p5: #a78bfa;
+  --p1bg: rgba(52,211,153,0.09); --p2bg: rgba(96,165,250,0.09);
+  --p3bg: rgba(251,146,60,0.09); --p4bg: rgba(244,114,182,0.09); --p5bg: rgba(167,139,250,0.09);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;}
+.app{display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{width:272px;min-width:272px;background:var(--bg2);border-right:1px solid var(--border);padding:0;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;}
+.logo{padding:24px 22px 20px;border-bottom:1px solid var(--border);}
+.logo-mark{font-size:17px;font-weight:800;color:var(--accent);letter-spacing:-0.02em;}
+.logo-sub{font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:3px;letter-spacing:0.1em;text-transform:uppercase;}
+.hackbyte-badge{display:inline-block;margin-top:8px;font-size:9px;font-family:'JetBrains Mono',monospace;padding:2px 7px;border-radius:3px;background:rgba(226,240,74,0.1);border:1px solid rgba(226,240,74,0.25);color:var(--accent2);letter-spacing:0.05em;}
+
+.overall{padding:18px 22px;border-bottom:1px solid var(--border);}
+.ov-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+.ov-pct{font-size:26px;font-weight:800;color:var(--text);letter-spacing:-0.03em;}
+.ov-label{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;}
+.ov-bar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;}
+.ov-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.5s cubic-bezier(.4,0,.2,1);}
+.ov-sub{display:flex;justify-content:space-between;margin-top:6px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
+
+.nav{flex:1;padding:10px 0;}
+.nav-item{display:flex;align-items:center;gap:11px;padding:11px 22px;cursor:pointer;border-left:2px solid transparent;transition:background 0.12s;}
+.nav-item:hover{background:var(--bg3);}
+.nav-item.active{background:var(--bg3);}
+.ni-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.ni-body{flex:1;min-width:0;}
+.ni-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ni-meta{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);margin-top:2px;}
+.ni-bar{height:2px;background:var(--bg4);border-radius:1px;margin-top:6px;}
+.ni-bfill{height:100%;border-radius:1px;transition:width 0.4s;}
+
+.sb-foot{padding:14px 22px;border-top:1px solid var(--border);}
+.reset-btn{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted2);background:none;border:none;cursor:pointer;letter-spacing:0.05em;}
+.reset-btn:hover{color:var(--muted);}
+
+/* MAIN */
+.main{flex:1;padding:36px 44px;max-width:960px;overflow-y:auto;}
+
+.ph-hero{display:flex;align-items:flex-start;gap:18px;margin-bottom:28px;}
+.ph-badge{width:56px;height:56px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
+.ph-badge-num{font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:500;opacity:0.7;}
+.ph-badge-icon{font-size:20px;font-weight:800;line-height:1;}
+.ph-info{flex:1;}
+.ph-title{font-size:26px;font-weight:800;letter-spacing:-0.03em;line-height:1.1;}
+.ph-desc{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.6;max-width:560px;}
+.ph-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.chip{font-size:10px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;border:1px solid var(--border2);color:var(--muted);}
+.chip.time{border-color:rgba(226,240,74,0.3);color:var(--accent2);background:rgba(226,240,74,0.05);}
+.chip.diff{border-color:rgba(96,165,250,0.3);color:#93c5fd;background:rgba(96,165,250,0.05);}
+
+.ph-pbar{background:var(--bg3);border-radius:10px;padding:14px 18px;margin-bottom:26px;display:flex;align-items:center;gap:16px;border:1px solid var(--border);}
+.ppb-txt{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);min-width:90px;}
+.ppb-track{flex:1;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;}
+.ppb-fill{height:100%;border-radius:3px;transition:width 0.5s cubic-bezier(.4,0,.2,1);}
+.ppb-num{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);min-width:56px;text-align:right;}
+
+/* deliverables */
+.deliverables{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:22px;}
+.deliv-label{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;}
+.deliv-list{display:flex;flex-direction:column;gap:5px;}
+.deliv-item{font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:flex-start;}
+.deliv-item::before{content:'→';color:var(--muted2);flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:10px;margin-top:1px;}
+
+/* WEEK */
+.week-block{margin-bottom:10px;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.week-hdr{display:flex;align-items:center;gap:12px;padding:13px 18px;cursor:pointer;background:var(--bg2);transition:background 0.12s;user-select:none;}
+.week-hdr:hover{background:var(--bg3);}
+.wk-tag{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);min-width:52px;letter-spacing:0.05em;}
+.wk-name{flex:1;font-size:13px;font-weight:600;}
+.wk-prog{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
+.wk-chev{font-size:9px;color:var(--muted2);transition:transform 0.18s;}
+.wk-chev.open{transform:rotate(90deg);}
+.week-body{display:none;border-top:1px solid var(--border);}
+.week-body.open{display:block;}
+
+/* learn strip */
+.learn-strip{padding:12px 18px;border-bottom:1px solid var(--border);background:var(--bg);}
+.ls-label{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:7px;}
+.ls-tags{display:flex;flex-wrap:wrap;gap:5px;}
+.ls-tag{font-size:10px;font-family:'JetBrains Mono',monospace;padding:2px 8px;border-radius:4px;background:var(--bg3);border:1px solid var(--border);color:var(--muted);}
+.ls-tag.new{border-color:rgba(226,240,74,0.3);color:var(--accent2);background:rgba(226,240,74,0.06);}
+
+/* tasks */
+.task-list{background:var(--bg);}
+.task-row{display:flex;align-items:flex-start;gap:12px;padding:11px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;}
+.task-row:last-child{border-bottom:none;}
+.task-row.done .task-top{background:transparent;}
+.task-top:hover{background:var(--bg3);}
+.t-check{width:19px;height:19px;border-radius:5px;border:1.5px solid var(--border2);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.14s;}
+.task-row.done .t-check{background:var(--accent);border-color:var(--accent);}
+.t-check svg{display:none;}
+.task-row.done .t-check svg{display:block;}
+.t-body{flex:1;}
+.t-title{font-size:13px;font-weight:500;line-height:1.4;transition:color 0.12s;}
+.task-row.done .t-title{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted2);}
+.t-desc{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.55;}
+.task-row.done .t-desc{color:var(--muted2);}
+.t-code{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--bg4);padding:2px 6px;border-radius:3px;color:#93c5fd;margin-top:5px;display:inline-block;}
+.t-badges{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;}
+.t-type{font-size:9px;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:0.06em;}
+.t-type.learn{background:rgba(226,240,74,0.1);color:var(--accent2);}
+.t-type.build{background:rgba(96,165,250,0.1);color:#60a5fa;}
+.t-type.setup{background:rgba(167,139,250,0.1);color:#a78bfa;}
+.t-type.test {background:rgba(244,114,182,0.1);color:#f472b6;}
+.t-type.ship {background:rgba(52,211,153,0.1);color:#34d399;}
+.t-type.install{background:rgba(251,146,60,0.1);color:#fb923c;}
+
+/* resources */
+.res-strip{padding:10px 18px;background:var(--bg2);border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.res-lbl{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted2);}
+.res-a{font-size:10px;font-family:'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;background:var(--bg3);border:1px solid var(--border);color:var(--muted);text-decoration:none;transition:border-color 0.12s,color 0.12s;cursor:pointer;}
+.res-a:hover{border-color:var(--border2);color:var(--text);}
+
+
+.ex-btn{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted2);cursor:pointer;padding:2px 8px;border-radius:3px;border:1px solid var(--border);background:none;user-select:none;transition:color 0.1s,border-color 0.1s;margin-top:6px;display:inline-block;}
+.ex-btn:hover,.ex-btn.on{color:var(--accent2);border-color:rgba(226,240,74,0.3);background:rgba(226,240,74,0.04);}
+.explain-box{display:none;margin:4px 18px 12px 49px;border-radius:8px;border:1px solid rgba(226,240,74,0.15);background:rgba(226,240,74,0.025);overflow:hidden;}
+.explain-box.open{display:block;}
+.ex-sec{padding:12px 14px;border-bottom:1px solid rgba(226,240,74,0.08);}
+.ex-sec:last-child{border-bottom:none;}
+.ex-lbl{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--accent2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:7px;opacity:0.75;}
+.ex-txt{font-size:12px;color:var(--muted);line-height:1.7;}
+.ex-txt strong{color:var(--text);font-weight:600;}
+.le-list{display:flex;flex-direction:column;gap:6px;}
+.le-row{display:flex;gap:10px;align-items:flex-start;}
+.le-n{font-family:'JetBrains Mono',monospace;color:rgba(226,240,74,0.4);min-width:20px;text-align:right;flex-shrink:0;font-size:10px;padding-top:2px;}
+.le-a{color:var(--muted2);flex-shrink:0;font-size:11px;padding-top:1px;}
+.le-t{font-size:11px;color:var(--muted);line-height:1.6;}
+.le-t strong{color:var(--text);}
+
+@media(max-width:680px){
+  .app{flex-direction:column;}
+  .sidebar{width:100%;height:auto;position:static;flex-direction:row;}
+  .logo,.overall,.sb-foot{display:none;}
+  .nav{display:flex;flex-direction:row;padding:10px;gap:6px;overflow-x:auto;}
+  .nav-item{padding:8px 12px;border-radius:8px;border-left:none;flex-shrink:0;}
+  .ni-bar{display:none;}
+  .main{padding:20px;}
+}
+
+.t-code-wrap{margin-top:8px;border-radius:7px;overflow:hidden;border:1px solid var(--border2);}
+.t-code-hdr{background:var(--bg4);padding:4px 12px;}
+.t-code-lang{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;}
+.t-code-body{background:#0a0c0f;padding:10px 14px;overflow-x:auto;}
+.t-code-body code{font-family:'JetBrains Mono',monospace;font-size:11px;color:#93c5fd;line-height:1.7;white-space:pre;}
+.t-explain{background:rgba(226,240,74,0.04);border-left:2px solid rgba(226,240,74,0.3);padding:10px 14px;}
+.t-explain-only{margin-top:8px;border-radius:7px;overflow:hidden;border:1px solid var(--border);}
+.t-explain-lbl{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--accent2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;}
+.t-explain-txt{font-size:11px;color:#aeaca4;line-height:1.7;}
+.t-explain-txt strong{color:var(--text);font-weight:500;}
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">ReelPatch</div>
+    <div class="logo-sub">Learning &amp; Build Tracker</div>
+    <div class="hackbyte-badge">HackByte 4.0 · IIITDM Jabalpur</div>
+  </div>
+  <div class="overall">
+    <div class="ov-row"><span class="ov-pct" id="ov-pct">0%</span><span class="ov-label">complete</span></div>
+    <div class="ov-bar"><div class="ov-fill" id="ov-bar" style="width:0%"></div></div>
+    <div class="ov-sub"><span id="ov-done">0 done</span><span id="ov-total">— tasks</span></div>
+  </div>
+  <div class="nav" id="nav"></div>
+  <div class="sb-foot"><button class="reset-btn" onclick="confirmReset()">↺ reset all progress</button></div>
+</nav>
+
+<main class="main" id="main"><p style="color:var(--muted);font-size:13px;padding:40px;">Loading…</p></main>
+</div>
+
+<script>
+
+const PHASES = [
+{
+  id:'p1',color:'#34d399',bg:'rgba(52,211,153,0.1)',
+  num:'01',name:'Bare Minimum MVP',
+  desc:'Build the working skeleton — video upload, FFmpeg metadata, platform selector, and a placeholder results page. By the end you can demo the pipeline end-to-end.',
+  time:'4-6 hrs build / ~3 weeks learn+build',diff:'Beginner-Intermediate',
+  deliverables:[
+    'Working React frontend with drag-and-drop upload',
+    'FastAPI backend receiving and storing video files',
+    'FFmpeg metadata extraction returning real video data',
+    'Platform dropdown wired to backend',
+    'Results page with metadata + placeholder badge',
+  ],
+  weeks:[
+    {
+      tag:'Week 1',name:'Mac setup + Python environment',
+      concepts:['Homebrew','virtual environments','pip','project structure','git','.env files'],
+      newConcepts:['Homebrew','virtual environments','pip','git','.env files'],
+      resources:[
+        {label:'Homebrew',url:'https://brew.sh'},
+        {label:'Real Python venvs',url:'https://realpython.com/python-virtual-environments-a-primer/'},
+        {label:'Git book',url:'https://git-scm.com/book/en/v2'},
+      ],
+      tasks:[
+        {
+          type:'setup',
+          title:'Install Homebrew — the Mac package manager',
+          desc:'Open Terminal (Cmd+Space, type Terminal). Paste this and press Enter. Homebrew lets you install developer tools with one command instead of downloading .dmg files.',
+          code:'/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
+          explain:'<strong>curl -fsSL URL</strong> downloads the install script silently (-s) and follows redirects (-L). <strong>/bin/bash -c</strong> runs the downloaded script immediately. The <strong>$(...)</strong> syntax means: run the curl command first, then use its output as the argument to bash. After this runs you will have the <strong>brew</strong> command available in every new terminal window.',
+        },
+        {
+          type:'setup',
+          title:'Install Python, git, and ffmpeg in one line',
+          desc:'Three essential tools for the whole project. Run this after Homebrew installs.',
+          code:'brew install python git ffmpeg',
+          explain:'<strong>brew install</strong> downloads, compiles, and installs each tool. <strong>python</strong> installs Python 3.11+ (much newer than macOS built-in). <strong>git</strong> is version control — you use it to save snapshots of your code. <strong>ffmpeg</strong> is the Swiss Army knife of video processing — you will use it in every single phase to extract frames, pull audio, cut clips, and probe video metadata.',
+        },
+        {
+          type:'setup',
+          title:'Install VS Code and add the shell command',
+          desc:'Download from code.visualstudio.com. Drag to Applications. Open VS Code. Press Cmd+Shift+P. Type shell command. Click Install code in PATH.',
+          code:'code .   # opens current folder in VS Code from any terminal',
+          explain:'<strong>code .</strong> — the dot means the current folder in Unix. Without installing the shell command you would have to use File > Open Folder every time. After installing it you can navigate to any project in Terminal and type <strong>code .</strong> to open it instantly. This saves you many clicks every day.',
+        },
+        {
+          type:'learn',
+          title:'Learn: what is a virtual environment and why you need one',
+          desc:'If you pip install globally, all your projects share the same packages. That causes version conflicts. A venv gives each project its own isolated package folder.',
+          explain:'Think of your Mac as one shared kitchen. If you install a spicy library globally, every project gets it — including your dessert project. A <strong>virtual environment (.venv)</strong> gives each project its own private kitchen with its own ingredients. When you activate it, pip installs only go into that project. When you deactivate it, you go back to the shared kitchen. You will see <strong>(.venv)</strong> at the start of your terminal prompt when it is active.',
+        },
+        {
+          type:'setup',
+          title:'Create the ReelPatch project folder structure',
+          desc:'Run these commands one by one. This creates the folder layout used by all 5 phases.',
+          code:'mkdir reelpatch && cd reelpatch\nmkdir backend frontend\ncd backend\npython3 -m venv .venv\nsource .venv/bin/activate',
+          explain:'<strong>mkdir</strong> creates a folder. <strong>cd</strong> moves into it. <strong>python3 -m venv .venv</strong> — -m venv means run the built-in venv module, .venv is the folder name (dot makes it hidden in Finder, which is intentional). <strong>source .venv/bin/activate</strong> turns the environment ON for your current terminal session. Run this source command every time you open a new terminal window before doing any pip installs or running Python.',
+        },
+        {
+          type:'setup',
+          title:'Initialise git and create .gitignore',
+          desc:'git tracks your code history. .gitignore tells git which files to never track — secrets, generated files, and the huge .venv folder.',
+          code:'git init\necho ".venv/\\n.env\\n__pycache__/\\ntmp/" > .gitignore\ngit add .\ngit commit -m "init reelpatch"',
+          explain:'<strong>git init</strong> creates a hidden .git folder — this is where all your history is stored. <strong>echo ... > .gitignore</strong> writes lines into a new file. <strong>git add .</strong> stages everything (dot = all files in current folder). <strong>git commit -m</strong> saves a permanent snapshot with a label. Think of commits as permanent Ctrl+S with a description. You can always go back to any commit.',
+        },
+        {
+          type:'learn',
+          title:'Learn: .env files — never put API keys in your code',
+          desc:'You will get API keys for Google Cloud, OpenAI, etc. Store them in .env, load them with python-dotenv. Never commit .env to git — it is in .gitignore.',
+          code:'pip install python-dotenv\n\n# backend/.env\nGOOGLE_API_KEY=paste_key_here\nOPENAI_API_KEY=paste_key_here\n\n# In Python:\nfrom dotenv import load_dotenv\nimport os\nload_dotenv()\nkey = os.getenv("GOOGLE_API_KEY")',
+          explain:'<strong>load_dotenv()</strong> reads your .env file and loads every line as an environment variable — a system-level key-value store. <strong>os.getenv("KEY")</strong> reads it back. The .env file lives only on your Mac and is listed in .gitignore so it is never uploaded anywhere. This is the industry-standard pattern — every company does this. If a key is ever leaked, you regenerate just that key without touching your code.',
+        },
+      ]
+    },
+    {
+      tag:'Week 2',name:'FastAPI backend + FFmpeg metadata',
+      concepts:['FastAPI','uvicorn','HTTP GET/POST','file upload','ffmpeg.probe','CORS'],
+      newConcepts:['FastAPI','uvicorn','REST API','CORS'],
+      resources:[
+        {label:'FastAPI first steps',url:'https://fastapi.tiangolo.com/tutorial/first-steps/'},
+        {label:'FastAPI file upload',url:'https://fastapi.tiangolo.com/tutorial/request-files/'},
+        {label:'ffmpeg-python',url:'https://github.com/kkroening/ffmpeg-python'},
+      ],
+      tasks:[
+        {
+          type:'install',
+          title:'Install FastAPI, uvicorn, python-multipart, ffmpeg-python',
+          desc:'Make sure (.venv) is active first. These four packages are the entire backend foundation.',
+          code:'pip install fastapi uvicorn python-multipart ffmpeg-python',
+          explain:'<strong>fastapi</strong> is the web framework — it lets you define URL routes as Python functions. <strong>uvicorn</strong> is the ASGI server that actually listens for incoming HTTP requests and runs FastAPI. <strong>python-multipart</strong> is required for file uploads — without it FastAPI cannot parse a video file sent from a browser. <strong>ffmpeg-python</strong> is a Python wrapper that calls the ffmpeg tool you installed in Week 1, letting you write ffmpeg operations as clean Python code.',
+        },
+        {
+          type:'learn',
+          title:'Learn: what is a REST API? How does your frontend talk to Python?',
+          desc:'Your React frontend (browser) cannot run Python directly. It sends HTTP requests to FastAPI, which runs Python and sends results back as JSON. Read the FastAPI First Steps page.',
+          explain:'Think of it as a restaurant. The <strong>frontend (React)</strong> is the customer. The <strong>API (FastAPI)</strong> is the waiter. The <strong>Python code</strong> is the kitchen. The customer never enters the kitchen — they hand an order to the waiter (HTTP request), wait, and receive food (JSON response). GET requests fetch data. POST requests send data. DELETE removes it. FastAPI turns Python functions into waiter routes automatically.',
+        },
+        {
+          type:'build',
+          title:'Create main.py — your first FastAPI server with /health route',
+          desc:'Create backend/main.py. This is your entire backend. Start with a health check to confirm it runs.',
+          code:'from fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get("/health")\ndef health():\n    return {"status": "ok", "app": "ReelPatch"}\n\n# Run with:\nuvicorn main:app --reload',
+          explain:'<strong>app = FastAPI()</strong> creates your application instance — a blank web server. <strong>@app.get("/health")</strong> is a decorator. It attaches the function below it to the GET /health route. When a browser visits that URL, FastAPI calls your function and sends back the returned dict as JSON automatically. <strong>--reload</strong> tells uvicorn to restart whenever you save a file — essential during development so you never have to manually restart.',
+        },
+        {
+          type:'build',
+          title:'Add POST /upload — accept a video file and return a job_id',
+          desc:'The frontend sends the video here. FastAPI saves it and returns a job_id to reference this scan later.',
+          code:'from fastapi import UploadFile, File, Form\nimport uuid, os, shutil\n\nUPLOAD_DIR = "tmp/uploads"\nos.makedirs(UPLOAD_DIR, exist_ok=True)\n\n@app.post("/upload")\nasync def upload(file: UploadFile = File(...), platform: str = Form(...)):\n    job_id = str(uuid.uuid4())\n    path = f"{UPLOAD_DIR}/{job_id}.mp4"\n    with open(path, "wb") as f:\n        shutil.copyfileobj(file.file, f)\n    return {"job_id": job_id, "platform": platform}',
+          explain:'<strong>UploadFile</strong> tells FastAPI to expect a file upload. <strong>Form(...)</strong> expects a text field alongside it. <strong>uuid.uuid4()</strong> generates a random unique ID like 3f2a1b-... — this becomes the job name so you can retrieve it later. <strong>shutil.copyfileobj(file.file, f)</strong> streams the file to disk in chunks — it never loads the whole video into RAM, which is important for large files. <strong>os.makedirs(..., exist_ok=True)</strong> creates the folder but does not crash if it already exists.',
+        },
+        {
+          type:'build',
+          title:'Add FFmpeg metadata extraction to the upload handler',
+          desc:'After saving the file, use ffmpeg.probe() to read the video\'s technical properties.',
+          code:'import ffmpeg\n\ndef get_metadata(path):\n    probe = ffmpeg.probe(path)\n    vs = next(s for s in probe["streams"] if s["codec_type"]=="video")\n    return {\n        "duration": float(probe["format"]["duration"]),\n        "width": vs["width"], "height": vs["height"],\n        "fps": eval(vs["r_frame_rate"]),\n        "codec": vs["codec_name"]\n    }',
+          explain:'<strong>ffmpeg.probe(path)</strong> runs ffmpeg in analysis mode — it reads the file header and returns all technical info as a Python dict without processing any video. <strong>probe["streams"]</strong> is a list of all tracks (video, audio, subtitles). <strong>next(s for s in ... if codec_type=="video")</strong> finds the first video stream. <strong>eval(vs["r_frame_rate"])</strong> converts the string "30000/1001" (how ffmpeg represents 29.97fps) into the actual number 29.97 by evaluating it as a Python division expression.',
+        },
+        {
+          type:'build',
+          title:'Add CORS middleware — let React call the API from the browser',
+          desc:'By default browsers block JavaScript from calling APIs on a different port. React is on port 5173, FastAPI on 8000. CORS middleware fixes this.',
+          code:'from fastapi.middleware.cors import CORSMiddleware\n\napp.add_middleware(\n    CORSMiddleware,\n    allow_origins=["http://localhost:5173"],\n    allow_methods=["*"],\n    allow_headers=["*"],\n)',
+          explain:'<strong>CORS</strong> (Cross-Origin Resource Sharing) is a browser security rule that blocks requests from one origin (host+port) to another by default. Your React app at localhost:5173 calling FastAPI at localhost:8000 is cross-origin. <strong>add_middleware(CORSMiddleware)</strong> adds a layer that attaches special headers to every response, telling the browser this is allowed. Without this, every fetch() call from React silently fails with a CORS error in the browser console.',
+        },
+        {
+          type:'test',
+          title:'Test all endpoints using FastAPI /docs',
+          desc:'Run the server, open http://localhost:8000/docs. FastAPI generates interactive API documentation automatically. Upload a real video and check the response.',
+          code:'uvicorn main:app --reload\n# Then open: http://localhost:8000/docs',
+          explain:'The <strong>/docs</strong> page (called Swagger UI) is auto-generated by FastAPI from your code. Every route appears with a form you can fill in and submit — no frontend needed. The green 200 response means success. If you see your video metadata returned correctly, the backend is working. Always test here before building the React frontend — it eliminates a whole layer of potential bugs by letting you verify the API independently.',
+        },
+      ]
+    },
+    {
+      tag:'Week 3',name:'React frontend — upload UI + results page',
+      concepts:['Node.js','npm','Vite','React components','useState','fetch','react-dropzone','Tailwind CSS'],
+      newConcepts:['Node.js','npm','React','JSX','useState','fetch','Tailwind CSS'],
+      resources:[
+        {label:'React tutorial',url:'https://react.dev/learn'},
+        {label:'Vite guide',url:'https://vitejs.dev/guide/'},
+        {label:'Tailwind CSS',url:'https://tailwindcss.com/docs'},
+        {label:'react-dropzone',url:'https://react-dropzone.js.org/'},
+      ],
+      tasks:[
+        {
+          type:'setup',
+          title:'Install Node.js via Homebrew',
+          desc:'Node.js lets you run JavaScript outside a browser. You need it to run React locally and use npm to install frontend packages.',
+          code:'brew install node\nnode --version   # v20 or higher\nnpm --version    # 10 or higher',
+          explain:'<strong>Node.js</strong> is to JavaScript what Python is to Python — a runtime that executes JavaScript code outside the browser. <strong>npm</strong> (Node Package Manager) is pip but for JavaScript. You use npm install the same way you use pip install. Node.js and npm come bundled together — one brew install command gets you both.',
+        },
+        {
+          type:'setup',
+          title:'Create the React app with Vite',
+          desc:'cd into frontend/ and run this. Vite creates a complete ready-to-run React project in seconds.',
+          code:'cd frontend\nnpm create vite@latest reelpatch-ui -- --template react\ncd reelpatch-ui && npm install\nnpm run dev',
+          explain:'<strong>npm create vite@latest</strong> runs the Vite project scaffolding tool. <strong>-- --template react</strong> — the double dash passes flags to Vite; --template react tells it to set up React specifically. <strong>npm install</strong> reads package.json and downloads all dependencies listed there (including React itself). <strong>npm run dev</strong> starts the dev server at http://localhost:5173 with Hot Module Replacement — every time you save a file, the browser updates instantly without a full refresh.',
+        },
+        {
+          type:'learn',
+          title:'Learn: React components, JSX, and useState',
+          desc:'React builds UI from components — reusable pieces like UploadBox or ViolationCard. JSX is HTML-like syntax inside JavaScript. useState manages changing data.',
+          code:'import { useState } from "react"\n\nfunction Counter() {\n  const [count, setCount] = useState(0)\n  return (\n    <div>\n      <p>Clicked {count} times</p>\n      <button onClick={() => setCount(count + 1)}>Click</button>\n    </div>\n  )\n}',
+          explain:'<strong>useState(0)</strong> returns two things: the current value and a function to update it. When setCount is called with a new value, React re-renders the component automatically. This is the entire React mental model: <strong>UI = f(state)</strong>. Change the state, the UI updates. JSX looks like HTML but is JavaScript — <strong>className</strong> instead of class, <strong>onClick</strong> instead of onclick, <strong>{count}</strong> to insert a variable value.',
+        },
+        {
+          type:'install',
+          title:'Install Tailwind CSS and react-dropzone',
+          desc:'Tailwind gives you utility CSS classes. react-dropzone handles drag-and-drop uploads.',
+          code:'npm install -D tailwindcss postcss autoprefixer\nnpm install react-dropzone\nnpx tailwindcss init -p',
+          explain:'<strong>-D</strong> installs as a dev dependency — Tailwind only runs during development to build CSS, not at runtime. <strong>postcss and autoprefixer</strong> are tools Tailwind needs to process its CSS. <strong>react-dropzone</strong> gives you a component with drag-and-drop and click-to-browse built in. <strong>npx tailwindcss init -p</strong> creates tailwind.config.js where you tell Tailwind which files to scan for class names.',
+        },
+        {
+          type:'build',
+          title:'Build the UploadBox component with react-dropzone',
+          desc:'A drag-and-drop zone. When a file is dropped it is stored in state and the filename is shown.',
+          code:'import { useDropzone } from "react-dropzone"\nexport function UploadBox({ onFile }) {\n  const { getRootProps, getInputProps, isDragActive } = useDropzone({\n    accept: { "video/*": [".mp4",".mov",".avi"] },\n    maxFiles: 1,\n    onDrop: files => onFile(files[0])\n  })\n  return (\n    <div {...getRootProps()}\n      className={isDragActive ? "border-green-400" : "border-gray-600"}>\n      <input {...getInputProps()} />\n      <p>Drop video here or click to browse</p>\n    </div>\n  )\n}',
+          explain:'<strong>useDropzone()</strong> returns three things: <strong>getRootProps</strong> spreads all drag event handlers onto your container div, <strong>getInputProps</strong> wires up a hidden file input for click-to-browse, and <strong>isDragActive</strong> is true while a file is being dragged over. <strong>{...getRootProps()}</strong> is the spread operator — it copies all properties from the object onto the div element. <strong>onFile(files[0])</strong> calls the parent\'s callback with the dropped file so the parent can store it in state.',
+        },
+        {
+          type:'build',
+          title:'Add the platform dropdown — YouTube / Instagram / TikTok',
+          desc:'A select element whose value is stored in useState. It gets sent alongside the video to FastAPI.',
+          code:'const [platform, setPlatform] = useState("youtube")\n\n<select value={platform} onChange={e => setPlatform(e.target.value)}>\n  <option value="youtube">YouTube</option>\n  <option value="instagram">Instagram</option>\n  <option value="tiktok">TikTok</option>\n  <option value="facebook">Facebook</option>\n  <option value="linkedin">LinkedIn</option>\n</select>',
+          explain:'<strong>value={platform}</strong> makes this a controlled component — React owns what the dropdown shows, not the browser. <strong>onChange={e => setPlatform(e.target.value)}</strong> — every change triggers this, e.target.value is the newly selected option string (e.g. "instagram"), setPlatform updates state. This pattern — value prop + onChange handler — is how you handle all form inputs in React. Always pair them together.',
+        },
+        {
+          type:'build',
+          title:'Wire upload button to FastAPI — send file + platform, show results',
+          desc:'POST to /upload using FormData. Show a loading state while waiting. Display metadata and placeholder badge when done.',
+          code:'const formData = new FormData()\nformData.append("file", videoFile)\nformData.append("platform", platform)\n\nconst res = await fetch("http://localhost:8000/upload", {\n  method: "POST",\n  body: formData  // do NOT set Content-Type manually\n})\nconst data = await res.json()',
+          explain:'<strong>FormData()</strong> is the browser\'s way of packaging a file upload — like a box. <strong>.append(key, value)</strong> puts items in the box. Do not set Content-Type manually when using FormData — the browser automatically sets it to multipart/form-data with the correct boundary string, and overriding it breaks file parsing. <strong>await fetch()</strong> waits for the HTTP round-trip to complete. <strong>await res.json()</strong> parses the response body from JSON text into a JavaScript object.',
+        },
+      ]
+    },
+  ]
+},
+{
+  id:'p2',color:'#60a5fa',bg:'rgba(96,165,250,0.1)',
+  num:'02',name:'AI Detection Engine',
+  desc:'Replace placeholder results with real AI detections. Three parallel modules: violence (Google Video Intelligence), NSFW (NudeNet), profanity (Whisper). All return the same unified schema.',
+  time:'6-8 hrs build / ~3 weeks learn+build',diff:'Intermediate',
+  deliverables:[
+    'Google Video Intelligence returning real violence timestamps',
+    'NudeNet scanning frames returning NSFW timestamps',
+    'Whisper + better_profanity returning profanity timestamps',
+    'Unified detection schema from all three modules',
+    'Frontend showing real flags with time + type + confidence',
+  ],
+  weeks:[
+    {
+      tag:'Week 4',name:'Google Video Intelligence — violence detection',
+      concepts:['Google Cloud console','service accounts','google-cloud-videointelligence','concurrent.futures','unified schema'],
+      newConcepts:['Google Cloud APIs','service account JSON','concurrent.futures'],
+      resources:[
+        {label:'Google Video Intelligence quickstart',url:'https://cloud.google.com/video-intelligence/docs/quickstart-client-libraries'},
+        {label:'Python concurrent.futures',url:'https://realpython.com/python-concurrency/'},
+      ],
+      tasks:[
+        {
+          type:'setup',
+          title:'Create a Google Cloud account and enable Video Intelligence API',
+          desc:'Go to console.cloud.google.com. Create project called reelpatch. Search for Video Intelligence API and enable it. Free tier gives 1000 minutes per month.',
+          explain:'Google Video Intelligence is a pre-trained AI model Google runs on their servers. You send it a video and it returns timestamps where it detected violence, explicit content, text, and more. You do not train this model — Google already trained it on billions of videos. You just pay (or use the free tier) to call it. Enabling the API in the console is like flipping a switch that says your project is allowed to use this service.',
+        },
+        {
+          type:'setup',
+          title:'Create a service account key — save as backend/google_key.json',
+          desc:'In Google Cloud: IAM and Admin > Service Accounts > Create. Name it reelpatch-scanner. Give it Video Intelligence User role. Download JSON key. Add google_key.json to .gitignore immediately.',
+          code:'# Add to .gitignore:\ngoogle_key.json\n\n# Add to .env:\nGOOGLE_APPLICATION_CREDENTIALS=google_key.json',
+          explain:'A <strong>service account</strong> is a non-human account your script uses to authenticate with Google Cloud — like a username and password, but for automated programs. The JSON key file contains a private key that proves your script is allowed to make API calls. <strong>GOOGLE_APPLICATION_CREDENTIALS</strong> is a special environment variable that all Google Cloud Python libraries automatically read — when they find it, they use that key file without you doing anything else.',
+        },
+        {
+          type:'install',
+          title:'Install the Google Cloud Video Intelligence library',
+          desc:'',
+          code:'pip install google-cloud-videointelligence',
+          explain:'This installs the official Google-provided Python package. It wraps all the underlying HTTP API calls for you — instead of building raw requests, you call Python functions and the library handles authentication, serialisation, and retries automatically. The package name is long but it is the official one from Google.',
+        },
+        {
+          type:'learn',
+          title:'Learn: why run all three detectors in parallel?',
+          desc:'Each detector takes 5-20 seconds. Running them one after another on a 1-minute video takes 60 seconds. Running them simultaneously takes 20 seconds. concurrent.futures makes this simple.',
+          code:'from concurrent.futures import ThreadPoolExecutor\n\n# Sequential (slow - 60s):\nv = detect_violence(path)  # 20s\nn = detect_nsfw(path)      # 20s\np = detect_profanity(path) # 20s\n\n# Parallel (fast - ~20s):\nwith ThreadPoolExecutor(max_workers=3) as ex:\n    vf = ex.submit(detect_violence, path)\n    nf = ex.submit(detect_nsfw, path)\n    pf = ex.submit(detect_profanity, path)\nresults = vf.result() + nf.result() + pf.result()',
+          explain:'<strong>ThreadPoolExecutor</strong> manages a pool of worker threads. <strong>ex.submit(fn, arg)</strong> starts fn(arg) in a background thread immediately and returns a Future object — a promise of a result. All three submits happen in microseconds so all three functions truly start at the same time. <strong>.result()</strong> blocks until that thread finishes and returns its value. The with block exits once all threads complete. This pattern makes your scanner roughly 3x faster than sequential execution.',
+        },
+        {
+          type:'build',
+          title:'Write detect_violence(video_path) using Google Video Intelligence',
+          desc:'Sends video to Google, gets back timestamped violence/explicit content detections.',
+          code:'from google.cloud import videointelligence\n\ndef detect_violence(video_path):\n    client = videointelligence.VideoIntelligenceServiceClient()\n    with open(video_path, "rb") as f:\n        content = f.read()\n    op = client.annotate_video(\n        request={"input_content": content,\n                 "features": [videointelligence.Feature.EXPLICIT_CONTENT_DETECTION]})\n    result = op.result(timeout=300)\n    violations = []\n    for frame in result.annotation_results[0].explicit_annotation.frames:\n        if frame.pornography_likelihood >= 3:\n            violations.append({\n                "type": "violence",\n                "start_time": frame.time_offset.total_seconds(),\n                "end_time": frame.time_offset.total_seconds() + 1.0,\n                "confidence": round(frame.pornography_likelihood / 5.0, 2),\n                "label": "Explicit/graphic content detected",\n                "platform_rule": "YouTube Community Guidelines"\n            })\n    return violations',
+          explain:'<strong>client.annotate_video()</strong> uploads the video to Google and starts the analysis job. This returns an operation object — a reference to a running background job. <strong>op.result(timeout=300)</strong> waits for the job to finish (up to 5 minutes). <strong>result.annotation_results[0].explicit_annotation.frames</strong> — Google nests results like Russian dolls: result > annotation_results (one per video) > explicit_annotation > frames. <strong>likelihood >= 3</strong> — Google uses a 1-5 scale (UNKNOWN, VERY_UNLIKELY, UNLIKELY, POSSIBLE, LIKELY, VERY_LIKELY). We flag LIKELY (4) and above. Dividing by 5 converts to 0-1 confidence.',
+        },
+        {
+          type:'build',
+          title:'Define the unified violation schema — ALL modules must use this',
+          desc:'Every detector returns the same shape. This is critical — if shapes vary, the frontend breaks.',
+          code:'# Every violation dict looks exactly like this:\n{\n    "id": "uuid string",\n    "type": "violence | nsfw | profanity | copyright",\n    "start_time": 12.4,  # seconds from video start\n    "end_time": 15.8,\n    "confidence": 0.87,  # 0.0 to 1.0\n    "label": "Graphic violence detected",\n    "platform_rule": "YouTube Community Guidelines"\n}',
+          explain:'This is called a <strong>contract</strong> in software engineering. By defining this shape upfront, you guarantee that all three detectors produce data the frontend can handle identically. The frontend only needs to know one format regardless of which detector flagged something. If you add a fourth detector later, it just follows the same schema. This is the principle of <strong>consistent interfaces</strong> — one of the most important patterns in building maintainable software.',
+        },
+        {
+          type:'test',
+          title:'Test detect_violence() on a real video — verify timestamps are correct',
+          desc:'Run it in a Python shell, print the raw output. Check: are timestamps accurate? Is confidence between 0 and 1? Does the schema match the definition above?',
+          explain:'Testing a function in isolation before wiring it into the full app is called a <strong>unit test</strong>. You know exactly what input you gave and exactly what you expect back. If the output surprises you, the bug is in this function only — not hidden somewhere in the full request cycle. Fix it here before integrating. This saves hours of debugging later.',
+        },
+      ]
+    },
+    {
+      tag:'Week 5',name:'NudeNet NSFW detection + OpenCV frame extraction',
+      concepts:['NudeNet','OpenCV','cv2.VideoCapture','frame sampling','PIL/Pillow','frame-to-timestamp math'],
+      newConcepts:['NudeNet','OpenCV','frame extraction','image inference'],
+      resources:[
+        {label:'NudeNet GitHub',url:'https://github.com/notAI-tech/NudeNet'},
+        {label:'OpenCV VideoCapture',url:'https://docs.opencv.org/4.x/dd/d43/tutorial_py_video_display.html'},
+      ],
+      tasks:[
+        {
+          type:'install',
+          title:'Install NudeNet and OpenCV',
+          desc:'NudeNet downloads its model weights (~90MB) automatically on first run. This is normal.',
+          code:'pip install nudenet opencv-python Pillow',
+          explain:'<strong>nudenet</strong> is a pre-trained NSFW content detection model. It classifies images into categories and returns confidence scores per category. <strong>opencv-python</strong> (imported as cv2) is a computer vision library — you will use it specifically to open a video file and extract individual frames as images. <strong>Pillow</strong> is a Python image library sometimes needed to convert between image formats that OpenCV and NudeNet expect differently.',
+        },
+        {
+          type:'learn',
+          title:'Learn: frame extraction and the frame-to-timestamp formula',
+          desc:'A video is a series of images played fast. Extract 1 frame per second, run NudeNet on each image, then map frame numbers back to timestamps using one formula.',
+          code:'# The core formula:\ntimestamp_seconds = frame_number / video_fps\n\n# Example: 30fps video\n# Frame 90  -> 90/30  = 3.0 seconds\n# Frame 450 -> 450/30 = 15.0 seconds\n\n# Jump to frame at timestamp t=5.0s:\n# frame_number = 5.0 * 30 = 150\ncap.set(cv2.CAP_PROP_POS_FRAMES, 150)\nret, frame = cap.read()',
+          explain:'<strong>cap.set(cv2.CAP_PROP_POS_FRAMES, N)</strong> jumps the video to frame number N without reading any frames in between — it is an O(1) seek. <strong>cap.read()</strong> then reads that one frame as a NumPy array (height x width x 3 RGB channels). The formula <strong>frame_number / fps = seconds</strong> is the core mapping used throughout this whole project. You need it for NudeNet, for Whisper alignment, and for the timeline UI.',
+        },
+        {
+          type:'build',
+          title:'Write extract_frames(video_path, job_id) — 1 frame per second',
+          desc:'Uses OpenCV to loop through the video and save one JPEG per second. Returns a list of dicts with path and timestamp.',
+          code:'import cv2, os\n\ndef extract_frames(video_path, job_id, sample_fps=1):\n    cap = cv2.VideoCapture(video_path)\n    fps = cap.get(cv2.CAP_PROP_FPS)\n    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))\n    interval = int(fps / sample_fps)  # every Nth frame\n    out_dir = f"tmp/frames/{job_id}"\n    os.makedirs(out_dir, exist_ok=True)\n    frames = []\n    for n in range(0, total, interval):\n        cap.set(cv2.CAP_PROP_POS_FRAMES, n)\n        ret, frame = cap.read()\n        if not ret: break\n        ts = n / fps\n        path = f"{out_dir}/{n:06d}.jpg"\n        cv2.imwrite(path, frame)\n        frames.append({"path": path, "timestamp": ts})\n    cap.release()\n    return frames',
+          explain:'<strong>cap.get(cv2.CAP_PROP_FPS)</strong> reads the video\'s frame rate. <strong>interval = int(fps / sample_fps)</strong> — for 30fps video with 1 sample/second, interval = 30, so range counts 0, 30, 60, 90... <strong>{n:06d}</strong> in the filename pads with zeros to 6 digits (000090.jpg) so files sort correctly alphabetically. <strong>cap.release()</strong> closes the file handle — always do this or the file stays locked on disk and other processes cannot access it.',
+        },
+        {
+          type:'build',
+          title:'Write detect_nsfw(video_path, job_id) using NudeNet',
+          desc:'Extracts frames, runs NudeNet on each, returns violations in the unified schema. Cleans up temp frames afterward.',
+          code:'from nudenet import NudeDetector\nimport shutil, uuid\n\ndetector = NudeDetector()  # load once at module level\n\nNSFW_LABELS = ["FEMALE_BREAST_EXPOSED","FEMALE_GENITALIA_EXPOSED",\n               "MALE_GENITALIA_EXPOSED","BUTTOCKS_EXPOSED"]\n\ndef detect_nsfw(video_path, job_id):\n    frames = extract_frames(video_path, job_id)\n    results = []\n    try:\n        for f in frames:\n            for det in detector.detect(f["path"]):\n                if det["class"] in NSFW_LABELS and det["score"] > 0.6:\n                    results.append({\n                        "id": str(uuid.uuid4()), "type": "nsfw",\n                        "start_time": f["timestamp"],\n                        "end_time": f["timestamp"] + 1.0,\n                        "confidence": round(det["score"], 3),\n                        "label": "NSFW content detected",\n                        "platform_rule": "Platform nudity policy"\n                    })\n    finally:\n        shutil.rmtree(f"tmp/frames/{job_id}", ignore_errors=True)\n    return results',
+          explain:'<strong>detector = NudeDetector()</strong> is at module level — outside the function. This loads the AI model into memory once when Python imports this file. If it were inside the function, it would reload the model every single call which takes several seconds each time. <strong>det["score"] > 0.6</strong> — only flag if NudeNet is more than 60% confident, reducing false positives. <strong>try/finally</strong> — the finally block runs regardless of whether an exception occurred. This guarantees temp frames are deleted even if NudeNet crashes halfway through.',
+        },
+        {
+          type:'test',
+          title:'Test detect_nsfw() standalone — verify timestamps and confidence',
+          desc:'Run it in a Python shell with a real video. Print the output. Do timestamps line up with actual content in the video? Is confidence between 0 and 1?',
+          explain:'Run the function independently, not through the API. Print each violation dict and manually check: jump to that timestamp in the video — does it match? A timestamp of 15.0s means 15 seconds in. If the timestamps are wrong, the frame-to-timestamp math has a bug. Fix it here before Phase 3 builds the timeline on top of these values.',
+        },
+        {
+          type:'build',
+          title:'Add cleanup — delete temp frames folder after each scan',
+          desc:'Frames take up disk space. The finally block in detect_nsfw already does this — confirm it runs correctly.',
+          code:'import shutil\ntry:\n    results = detect_nsfw(path, job_id)\nfinally:\n    shutil.rmtree(f"tmp/frames/{job_id}", ignore_errors=True)',
+          explain:'<strong>shutil.rmtree(path, ignore_errors=True)</strong> deletes an entire folder and all its contents recursively. <strong>ignore_errors=True</strong> prevents it from crashing if the folder doesn\'t exist. The <strong>try/finally</strong> pattern means: run the try block, then always run finally — even if an exception was raised. This is the correct way to guarantee cleanup code runs regardless of what happens.',
+        },
+      ]
+    },
+    {
+      tag:'Week 6',name:'Whisper + profanity detection + merge all detectors',
+      concepts:['OpenAI Whisper','audio extraction with ffmpeg','better_profanity','word-level timestamps','ThreadPoolExecutor'],
+      newConcepts:['Whisper','audio extraction','word timestamps','profanity filtering'],
+      resources:[
+        {label:'Whisper API docs',url:'https://platform.openai.com/docs/guides/speech-to-text'},
+        {label:'better_profanity',url:'https://github.com/snguyenthanh/better_profanity'},
+      ],
+      tasks:[
+        {
+          type:'install',
+          title:'Install openai and better-profanity',
+          desc:'',
+          code:'pip install openai better-profanity',
+          explain:'<strong>openai</strong> is the official Python client for all OpenAI APIs — Whisper (speech-to-text), GPT, and more. It reads OPENAI_API_KEY from your environment automatically. <strong>better-profanity</strong> is a simple library with a built-in list of profane words. You will use it to check each word from the Whisper transcript. It has zero setup — just call profanity.contains_profanity(word).',
+        },
+        {
+          type:'build',
+          title:'Write extract_audio(video_path, job_id) — pull audio from video',
+          desc:'Uses ffmpeg-python to strip out the audio track as a .wav file. Whisper needs audio, not video.',
+          code:'import ffmpeg, os\n\ndef extract_audio(video_path, job_id):\n    out = f"tmp/audio/{job_id}.wav"\n    os.makedirs("tmp/audio", exist_ok=True)\n    (\n        ffmpeg.input(video_path)\n        .output(out, ac=1, ar=16000, acodec="pcm_s16le")\n        .overwrite_output().run(quiet=True)\n    )\n    return out',
+          explain:'<strong>ffmpeg.input(video_path)</strong> feeds the video into ffmpeg. <strong>.output(out, ac=1, ar=16000)</strong> — ac=1 means mono audio (1 channel instead of stereo 2), ar=16000 means 16000 samples per second (Whisper works best at this rate). <strong>acodec=pcm_s16le</strong> — PCM uncompressed audio, signed 16-bit, little-endian. This is the standard WAV format. <strong>run(quiet=True)</strong> suppresses ffmpeg\'s verbose progress output from flooding your terminal.',
+        },
+        {
+          type:'build',
+          title:'Write detect_profanity(video_path, job_id) using Whisper + better_profanity',
+          desc:'Extracts audio, transcribes with Whisper (word-level timestamps), checks each word. Returns violations at exact word timestamps.',
+          code:'from openai import OpenAI\nfrom better_profanity import profanity\nimport uuid\n\nclient = OpenAI()\nprofanity.load_censor_words()\n\ndef detect_profanity(video_path, job_id):\n    audio = extract_audio(video_path, job_id)\n    violations = []\n    with open(audio, "rb") as f:\n        t = client.audio.transcriptions.create(\n            model="whisper-1", file=f,\n            response_format="verbose_json",\n            timestamp_granularities=["word"])\n    for w in t.words:\n        if profanity.contains_profanity(w.word):\n            violations.append({\n                "id": str(uuid.uuid4()), "type": "profanity",\n                "start_time": w.start, "end_time": w.end,\n                "confidence": 0.95,\n                "label": f"Profanity: [{w.word}]",\n                "platform_rule": "Platform language policy"\n            })\n    return violations',
+          explain:'<strong>timestamp_granularities=["word"]</strong> — this is the key parameter. Instead of sentence-level timestamps, Whisper returns the start and end time of every individual word. So if someone says a bad word at t=8.3s the violation gets that exact timestamp. <strong>profanity.contains_profanity(w.word)</strong> checks against a built-in word list. <strong>confidence: 0.95</strong> — rule-based matching is very reliable so we hardcode high confidence. <strong>w.start, w.end</strong> — Whisper returns these as float seconds directly, matching the unified schema perfectly.',
+        },
+        {
+          type:'build',
+          title:'Merge all three detectors — run in parallel in POST /upload',
+          desc:'Update the upload handler to run all three detectors simultaneously. Merge and sort results.',
+          code:'from concurrent.futures import ThreadPoolExecutor\n\n@app.post("/upload")\nasync def upload(file: UploadFile = File(...), platform: str = Form(...)):\n    job_id = str(uuid.uuid4())\n    # ... save file ...\n    with ThreadPoolExecutor(max_workers=3) as ex:\n        vf = ex.submit(detect_violence, file_path, job_id)\n        nf = ex.submit(detect_nsfw, file_path, job_id)\n        pf = ex.submit(detect_profanity, file_path, job_id)\n    all_v = sorted(\n        vf.result() + nf.result() + pf.result(),\n        key=lambda v: v["start_time"]\n    )\n    return {"job_id": job_id, "violations": all_v, "metadata": metadata}',
+          explain:'<strong>with ThreadPoolExecutor(max_workers=3) as ex</strong> creates 3 worker threads and automatically shuts them down when the with block ends. <strong>ex.submit(fn, arg1, arg2)</strong> starts fn(arg1, arg2) in a background thread and immediately returns a Future — the function is running right now while your code continues to the next submit. All three start in microseconds. <strong>sorted(..., key=lambda v: v["start_time"])</strong> sorts the merged list by timestamp so violations appear chronologically on the timeline.',
+        },
+        {
+          type:'build',
+          title:'Update the React frontend — show real flags in a list',
+          desc:'Map over the violations array. For each one show violation type (colour-coded), timestamp as MM:SS, and confidence as a percentage.',
+          code:'function secondsToMMSS(s) {\n  const m = Math.floor(s/60)\n  const sec = Math.floor(s%60)\n  return pad(m)+\':\'+pad(sec)\n}\n\n{violations.map(v => (\n  <div key={v.id} className="border-l-4 p-3" style={{borderColor: TYPE_COLOR[v.type]}}>\n    <span>{v.type.toUpperCase()}</span>\n    <span>{secondsToMMSS(v.start_time)}</span>\n    <span>{Math.round(v.confidence * 100)}%</span>\n    <span>{v.label}</span>\n  </div>\n))}',
+          explain:'<strong>violations.map(v => (...))</strong> — the .map() method creates a new array by transforming each element. In JSX this renders one div per violation. <strong>key={v.id}</strong> — React requires a unique key on each element in a list so it can track which items changed when re-rendering. <strong>Math.round(v.confidence * 100)</strong> converts 0.87 to 87 for display. <strong>style={{borderColor: TYPE_COLOR[v.type]}}</strong> — double braces: outer for JSX expression, inner for the object literal. This applies a colour-coded left border per violation type.',
+        },
+      ]
+    },
+  ]
+},
+{
+  id:'p3',color:'#fb923c',bg:'rgba(251,146,60,0.1)',
+  num:'03',name:'Platform Rules + Timeline UI',
+  desc:'Make the platform dropdown change what gets flagged. Then build the visual timeline — colour-coded violation bands on a video scrubber with hover previews and accept/dismiss controls.',
+  time:'5-7 hrs build / ~3 weeks learn+build',diff:'Intermediate',
+  deliverables:[
+    'platforms.json config driving different results per platform',
+    'Backend filtering violations against platform thresholds',
+    'Interactive WaveSurfer timeline with colour-coded bands',
+    'Thumbnail preview + details panel per flag',
+    'Accept / Dismiss controls + bulk actions',
+  ],
+  weeks:[
+    {
+      tag:'Week 7',name:'Platform rules engine',
+      concepts:['JSON config files','threshold filtering','config-driven architecture','platform policies'],
+      newConcepts:['config-driven logic','threshold comparison'],
+      resources:[
+        {label:'Python json module',url:'https://realpython.com/python-json/'},
+      ],
+      tasks:[
+        {
+          type:'build',
+          title:'Create backend/platforms.json — rules for 5 platforms',
+          desc:'Each platform entry defines thresholds and booleans. Same video, different flags depending on which platform is selected.',
+          code:'{\n  "youtube":   {"violence_threshold": 0.60, "nsfw_allowed": false,\n               "profanity_allowed": false, "copyright_flag": true},\n  "instagram": {"violence_threshold": 0.50, "nsfw_allowed": false,\n               "profanity_allowed": false, "copyright_flag": true},\n  "tiktok":    {"violence_threshold": 0.40, "nsfw_allowed": false,\n               "profanity_allowed": false, "copyright_flag": true},\n  "facebook":  {"violence_threshold": 0.55, "nsfw_allowed": false,\n               "profanity_allowed": false, "copyright_flag": true},\n  "linkedin":  {"violence_threshold": 0.70, "nsfw_allowed": false,\n               "profanity_allowed": true,  "copyright_flag": false}\n}',
+          explain:'Each platform entry is a set of <strong>thresholds and booleans</strong>. A violence_threshold of 0.40 for TikTok means: flag any violence violation where confidence >= 0.40. YouTube\'s is 0.60 — more lenient. So a 50% confidence violence detection passes YouTube but fails TikTok. This is exactly how real platform policies work. <strong>profanity_allowed: true</strong> for LinkedIn means: ignore profanity entirely for LinkedIn posts. The same video will show different violations depending on the target platform.',
+        },
+        {
+          type:'build',
+          title:'Write filter_by_platform(violations, platform) in Python',
+          desc:'Loads platforms.json and removes violations that are acceptable for the chosen platform.',
+          code:'import json\nwith open("platforms.json") as f:\n    RULES = json.load(f)\n\ndef filter_by_platform(violations, platform):\n    rules = RULES.get(platform, RULES["youtube"])\n    out = []\n    for v in violations:\n        if v["type"]=="violence" and v["confidence"] >= rules["violence_threshold"]:\n            out.append(v)\n        elif v["type"]=="nsfw" and not rules["nsfw_allowed"]:\n            out.append(v)\n        elif v["type"]=="profanity" and not rules["profanity_allowed"]:\n            out.append(v)\n        elif v["type"]=="copyright" and rules["copyright_flag"]:\n            out.append(v)\n    return out',
+          explain:'<strong>json.load(f)</strong> reads the JSON file and converts it into a Python dict. <strong>RULES.get(platform, RULES["youtube"])</strong> — .get() with a second argument is a safe lookup that returns the fallback if the key doesn\'t exist. For violence: <strong>v["confidence"] >= rules["violence_threshold"]</strong> — a 0.50 confidence flag passes YouTube (threshold 0.60) but gets caught by TikTok (threshold 0.40). For boolean rules: <strong>not rules["nsfw_allowed"]</strong> — if the platform doesn\'t allow NSFW, keep the flag. If it does, drop it.',
+        },
+        {
+          type:'build',
+          title:'Apply platform filtering in POST /upload',
+          desc:'After running all three detectors, call filter_by_platform() with the user\'s platform choice before returning results.',
+          code:'all_violations = vf.result() + nf.result() + pf.result()\nfiltered = filter_by_platform(all_violations, platform)\nfiltered.sort(key=lambda v: v["start_time"])\nreturn {"job_id": job_id, "violations": filtered}',
+          explain:'This single line changes the entire user experience. The same video uploaded for YouTube vs TikTok now returns different violation counts. TikTok is stricter so it flags more. LinkedIn ignores profanity. This is config-driven behaviour — you changed the outcome by editing a JSON file, not by touching any Python logic. This architecture makes it trivially easy to add new platforms or update thresholds without changing code.',
+        },
+        {
+          type:'test',
+          title:'Test: same video, YouTube shows fewer flags than TikTok',
+          desc:'Upload the same video twice — once with platform=youtube and once with platform=tiktok. TikTok must return more or equal violations. Verify in /docs.',
+          explain:'This is an integration test — you are testing the whole flow, not just one function. You already unit-tested filter_by_platform in isolation. Now test that it\'s correctly wired into the upload endpoint. If YouTube and TikTok return the same violations for a video with borderline-confidence detections, the filtering isn\'t being applied. Check that filter_by_platform is actually called in your upload handler.',
+        },
+        {
+          type:'build',
+          title:'Add the platform rule label to each violation',
+          desc:'Each violation should include a human-readable string like YouTube Community Guidelines — Violence so users know exactly which rule they are breaking.',
+          explain:'Right now violations have a generic platform_rule string. Update filter_by_platform to set a specific label per platform: for YouTube violence it should say \'YouTube Community Guidelines — Violent Content\'. This appears in the Phase 3 timeline details panel and in the Phase 4 PDF compliance report. The more specific the label, the more useful the tool is to real creators.',
+        },
+      ]
+    },
+    {
+      tag:'Week 8',name:'Interactive timeline with WaveSurfer.js',
+      concepts:['WaveSurfer.js','Regions plugin','useRef','HTMLVideoElement.currentTime','timeupdate','CSS overlay'],
+      newConcepts:['WaveSurfer.js','useRef','video DOM API','timeupdate event'],
+      resources:[
+        {label:'WaveSurfer.js docs',url:'https://wavesurfer.xyz/'},
+        {label:'WaveSurfer Regions plugin',url:'https://wavesurfer.xyz/plugins/regions'},
+        {label:'MDN HTMLVideoElement',url:'https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement'},
+      ],
+      tasks:[
+        {
+          type:'install',
+          title:'Install WaveSurfer.js',
+          desc:'',
+          code:'npm install wavesurfer.js',
+          explain:'WaveSurfer.js renders an interactive audio waveform in the browser — the kind you see in Audacity or GarageBand. Its <strong>Regions plugin</strong> lets you draw coloured rectangles on the waveform at specific time ranges. You will use these as visual violation markers. Clicking a region seeks the video to that timestamp. This is your Phase 3 showpiece feature.',
+        },
+        {
+          type:'learn',
+          title:'Learn: useRef — accessing real DOM elements from React',
+          desc:'React normally abstracts away the DOM. But WaveSurfer and the video player need actual DOM elements. useRef gives you a direct reference to a real DOM node.',
+          code:'import { useRef, useEffect } from "react"\n\nfunction MyComponent() {\n  const divRef = useRef(null)   // null until the component renders\n  const videoRef = useRef(null)\n\n  useEffect(() => {\n    // divRef.current is the actual <div> DOM element:\n    console.log(divRef.current)  // <div>...</div>\n    // You can read/set DOM properties directly:\n    videoRef.current.currentTime = 5.0  // seek video to 5s\n  }, [])\n\n  return (\n    <div>\n      <div ref={divRef} />      {/* attaches the ref */}\n      <video ref={videoRef} />\n    </div>\n  )\n}',
+          explain:'<strong>useRef(null)</strong> creates a mutable container — it starts as null, then after the component renders, .current points to the real DOM element. Unlike state, changing .current does NOT trigger a re-render. <strong>videoRef.current.currentTime = 5.0</strong> directly sets the video\'s playback position — this is a native browser DOM property. React doesn\'t wrap it. You access it directly through the ref. WaveSurfer needs a real div DOM element as its container, which is why you pass divRef.current to WaveSurfer.create().',
+        },
+        {
+          type:'build',
+          title:'Create the Timeline component with WaveSurfer waveform',
+          desc:'Renders the waveform and adds a coloured region for each violation.',
+          code:'import WaveSurfer from "wavesurfer.js"\nimport RegionsPlugin from "wavesurfer.js/dist/plugins/regions.js"\nimport { useEffect, useRef } from "react"\n\nconst COLORS = {\n  violence: "rgba(239,68,68,0.4)",\n  nsfw: "rgba(251,146,60,0.4)",\n  copyright: "rgba(234,179,8,0.4)",\n  profanity: "rgba(168,85,247,0.4)"\n}\n\nexport function Timeline({ audioUrl, violations }) {\n  const waveRef = useRef(null)\n  useEffect(() => {\n    const regions = RegionsPlugin.create()\n    const ws = WaveSurfer.create({\n      container: waveRef.current,\n      waveColor: "#374151", progressColor: "#60a5fa",\n      height: 80, plugins: [regions]\n    })\n    ws.load(audioUrl)\n    ws.on("ready", () => {\n      violations.forEach(v => regions.addRegion({\n        start: v.start_time, end: v.end_time,\n        color: COLORS[v.type], drag: false, resize: false\n      }))\n    })\n    return () => ws.destroy()\n  }, [audioUrl, violations])\n  return <div ref={waveRef} className="w-full" />\n}',
+          explain:'<strong>useEffect(() => {...}, [audioUrl, violations])</strong> — runs after the component renders. The dependency array means re-run if audioUrl or violations changes. <strong>WaveSurfer.create({container: waveRef.current})</strong> — .current gives the actual DOM div. <strong>ws.on("ready", ...)</strong> — WaveSurfer fires this event when the audio finishes loading. You must wait for ready before adding regions — before that, getDuration() returns 0. <strong>return () => ws.destroy()</strong> — this cleanup function runs when the component unmounts, freeing memory and stopping audio processing.',
+        },
+        {
+          type:'build',
+          title:'Sync the video player to the timeline — click region to seek',
+          desc:'Wire the video element to WaveSurfer so clicking a violation band jumps the video to that moment.',
+          code:'const videoRef = useRef(null)\n\n// Click on a WaveSurfer region -> seek video\nregions.on("region-clicked", (region) => {\n  videoRef.current.currentTime = region.start\n  videoRef.current.play()\n})\n\n// Video plays -> move WaveSurfer cursor\n// In JSX on the video element:\nonTimeUpdate={() => {\n  const pct = videoRef.current.currentTime / ws.getDuration()\n  ws.seekTo(pct)  // 0.0 to 1.0, not seconds\n}}',
+          explain:'<strong>videoRef.current.currentTime = region.start</strong> — this is the key operation. The browser\'s HTMLVideoElement has a currentTime property in seconds. Setting it instantly jumps playback. <strong>videoRef.current.play()</strong> starts playback from that position. <strong>onTimeUpdate</strong> fires roughly every 250ms during playback. <strong>ws.seekTo(pct)</strong> — WaveSurfer\'s seekTo takes a fraction 0.0-1.0, not seconds. Dividing currentTime by total duration converts it. This two-way sync means: click the timeline -> video seeks; scrub the video -> timeline cursor moves.',
+        },
+        {
+          type:'build',
+          title:'Show violation details panel when a region is clicked',
+          desc:'Clicking a violation band shows a panel with: type badge, start/end time, confidence %, label, and platform rule.',
+          code:'const [active, setActive] = useState(null)\n\n// In the regions.on handler:\nregions.on("region-clicked", (region) => {\n  const v = violations.find(v => Math.abs(v.start_time - region.start) < 0.1)\n  setActive(v)\n})\n\n// In JSX:\n{active && (\n  <div className="bg-gray-800 rounded-xl p-4">\n    <p>{active.type.toUpperCase()}</p>\n    <p>{active.start_time.toFixed(1)}s - {active.end_time.toFixed(1)}s</p>\n    <p>{Math.round(active.confidence*100)}% confidence</p>\n    <p>{active.label}</p>\n    <p className="text-gray-500 text-xs">{active.platform_rule}</p>\n  </div>\n)}',
+          explain:'<strong>violations.find(v => Math.abs(v.start_time - region.start) < 0.1)</strong> — finds the violation whose start_time matches the clicked region\'s start time. Using < 0.1 instead of === because floating point numbers are never exactly equal. <strong>setActive(v)</strong> stores the clicked violation in state. <strong>{active && (...)}</strong> — in JSX, && means conditional render: if active is null (falsy) nothing renders; if active has data the panel renders. <strong>.toFixed(1)</strong> formats 12.456 as 12.5.',
+        },
+      ]
+    },
+    {
+      tag:'Week 9',name:'Thumbnail preview + Accept/Dismiss controls',
+      concepts:['FastAPI FileResponse','thumbnail generation','decisions state','bulk actions','optimistic UI'],
+      newConcepts:['image endpoint','decisions state pattern','bulk state updates'],
+      resources:[
+        {label:'FastAPI FileResponse',url:'https://fastapi.tiangolo.com/advanced/custom-response/#fileresponse'},
+        {label:'React state patterns',url:'https://react.dev/learn/sharing-state-between-components'},
+      ],
+      tasks:[
+        {
+          type:'build',
+          title:'Add GET /thumbnail/{job_id}?t={seconds} to FastAPI',
+          desc:'Extracts one frame at timestamp t from the saved video. Returns it as a JPEG. Used for violation preview images.',
+          code:'from fastapi.responses import FileResponse\nimport ffmpeg, os\n\n@app.get("/thumbnail/{job_id}")\ndef thumbnail(job_id: str, t: float = 0.0):\n    video = f"tmp/uploads/{job_id}.mp4"\n    out = f"tmp/thumbs/{job_id}_{t:.1f}.jpg"\n    os.makedirs("tmp/thumbs", exist_ok=True)\n    if not os.path.exists(out):\n        ffmpeg.input(video, ss=t).output(out, vframes=1)\\\n              .overwrite_output().run(quiet=True)\n    return FileResponse(out, media_type="image/jpeg")',
+          explain:'<strong>ss=t</strong> in ffmpeg means seek to position t seconds. <strong>vframes=1</strong> means extract exactly one frame then stop — without this ffmpeg would encode the entire rest of the video as images. <strong>if not os.path.exists(out)</strong> — caching: if you already extracted this thumbnail, return the cached file instead of running ffmpeg again. <strong>FileResponse(out, media_type="image/jpeg")</strong> sends the JPEG file as the HTTP response body. The browser automatically displays it when used as an img src.',
+        },
+        {
+          type:'build',
+          title:'Show thumbnail in the violation details panel',
+          desc:'When a violation is clicked, display the frame at that timestamp using your new thumbnail endpoint.',
+          code:'<img\n  src={"http://localhost:8000/thumbnail/" + jobId + "?t=" + active.start_time}\n  className="w-full rounded-lg aspect-video object-cover"\n  alt="violation frame"\n/>',
+          explain:'The browser makes a GET request to your FastAPI endpoint whenever this img tag renders with a src. <strong>aspect-video</strong> is a Tailwind class that locks the image to a 16:9 ratio — same as most videos, so the thumbnail doesn\'t stretch. <strong>object-cover</strong> fills the box by cropping rather than distorting. String concatenation with + is used instead of template literals to avoid backtick syntax issues inside JSX attribute strings.',
+        },
+        {
+          type:'build',
+          title:'Add Accept and Dismiss buttons to each violation card',
+          desc:'Each violation card gets two buttons. Decisions are stored in a top-level state object keyed by violation ID.',
+          code:'// In App.jsx:\nconst [decisions, setDecisions] = useState({})\n// { "uuid-1": "accepted", "uuid-2": "dismissed", ... }\n\nfunction decide(id, decision) {\n  setDecisions(prev => ({ ...prev, [id]: decision }))\n}\n\n// In ViolationCard:\n<button onClick={() => decide(v.id, "accepted")}\n  className={decisions[v.id]==="accepted" ? "bg-green-500" : "bg-gray-700"}>\n  Accept\n</button>\n<button onClick={() => decide(v.id, "dismissed")}\n  className={decisions[v.id]==="dismissed" ? "bg-gray-500" : "bg-gray-700"}>\n  Dismiss\n</button>',
+          explain:'<strong>decisions</strong> is an object (not an array) — keyed by violation ID for O(1) lookup. <strong>setDecisions(prev => ({...prev, [id]: decision}))</strong> — this is the React pattern for updating one key in an object state. The spread <strong>...prev</strong> copies all existing decisions, then <strong>[id]: decision</strong> adds or overwrites just the one you changed. Square brackets around id make it a computed key — the variable\'s value becomes the key name. The button style changes based on whether decisions[v.id] matches its type.',
+        },
+        {
+          type:'build',
+          title:'Add bulk actions — Dismiss all of a type at once',
+          desc:'Buttons above the timeline: Dismiss all violence, Dismiss all NSFW, etc.',
+          code:'function dismissAllOfType(type) {\n  const updates = {}\n  violations\n    .filter(v => v.type === type)\n    .forEach(v => { updates[v.id] = "dismissed" })\n  setDecisions(prev => ({ ...prev, ...updates }))\n}',
+          explain:'<strong>violations.filter(v => v.type === type)</strong> gets all violations of that type. <strong>.forEach(v => updates[v.id] = "dismissed")</strong> builds a batch update object. <strong>setDecisions(prev => ({...prev, ...updates}))</strong> — spreading ...updates at the end means its keys overwrite any existing ones. This is an atomic update: one state change that updates all matching violations simultaneously, avoiding the multiple-render problem you get from calling setDecisions in a loop.',
+        },
+        {
+          type:'build',
+          title:'Add a review summary bar — accepted / dismissed / pending counts',
+          desc:'A sticky bar showing live counts that update as the user reviews violations.',
+          code:'const accepted  = violations.filter(v => decisions[v.id]==="accepted").length\nconst dismissed = violations.filter(v => decisions[v.id]==="dismissed").length\nconst pending   = violations.length - accepted - dismissed\n\n<div className="flex gap-6 p-3 bg-gray-900">\n  <span className="text-green-400">{accepted} accepted</span>\n  <span className="text-gray-400">{dismissed} dismissed</span>\n  <span className="text-yellow-400">{pending} pending</span>\n</div>',
+          explain:'These three values are <strong>derived state</strong> — computed from existing state rather than stored separately. Never store counts as separate state variables that you manually increment — they get out of sync. Instead, compute them from the source of truth (decisions object) every render. React re-renders are fast and these filter operations on a few dozen violations take microseconds. <strong>violations.length - accepted - dismissed</strong> — subtraction is cheaper than a third filter call.',
+        },
+      ]
+    },
+  ]
+},
+{
+  id:'p4',color:'#f472b6',bg:'rgba(244,114,182,0.1)',
+  num:'04',name:'Multi-Format Output',
+  desc:'Turn reviewed violations into real exports. Clean video, flagged clips ZIP, JSON, SRT, PDF compliance report, EDL, and Premiere Pro XML. Different users need different formats.',
+  time:'4-5 hrs build / ~2 weeks learn+build',diff:'Intermediate',
+  deliverables:[
+    'Clean video with accepted violations removed',
+    'Flagged clips ZIP download',
+    'JSON and SRT report downloads',
+    'PDF compliance report',
+    'EDL and Premiere Pro XML export',
+  ],
+  weeks:[
+    {
+      tag:'Week 10',name:'Clean video + flagged clips export',
+      concepts:['MoviePy','VideoFileClip.subclip','concatenate_videoclips','Python zipfile','FastAPI FileResponse'],
+      newConcepts:['MoviePy','video cutting','zipfile'],
+      resources:[
+        {label:'MoviePy docs',url:'https://zulko.github.io/moviepy/'},
+        {label:'FastAPI FileResponse',url:'https://fastapi.tiangolo.com/advanced/custom-response/#fileresponse'},
+      ],
+      tasks:[
+        {
+          type:'install',
+          title:'Install MoviePy',
+          desc:'',
+          code:'pip install moviepy',
+          explain:'MoviePy is a Python library for video editing. It wraps ffmpeg in a clean Python API. You can load a video as a clip, slice it with subclip(start, end), apply effects, and stitch clips together with concatenate_videoclips(). For ReelPatch you mainly need these two operations: subclip to extract segments and concatenate to join the kept parts.',
+        },
+        {
+          type:'build',
+          title:'Write export_clean_video(video_path, accepted_violations, output_path)',
+          desc:'Cuts out every accepted violation segment and stitches the remaining parts together.',
+          code:'from moviepy.editor import VideoFileClip, concatenate_videoclips\n\ndef export_clean_video(video_path, accepted, output_path):\n    clip = VideoFileClip(video_path)\n    cuts = sorted([(v["start_time"],v["end_time"]) for v in accepted])\n    keep, cursor = [], 0.0\n    for start, end in cuts:\n        if cursor < start:\n            keep.append(clip.subclip(cursor, start))\n        cursor = end\n    if cursor < clip.duration:\n        keep.append(clip.subclip(cursor, clip.duration))\n    final = concatenate_videoclips(keep or [clip])\n    final.write_videofile(output_path, codec="libx264",\n                          audio_codec="aac", logger=None)\n    clip.close()\n    return output_path',
+          explain:'The logic is the <strong>inverse of violations</strong> — you collect everything BETWEEN and AROUND them. Think of violations as holes in a piece of cheese; you keep the cheese, not the holes. <strong>cursor</strong> tracks where you are in the video. For each violation: add subclip from cursor to start (the safe stretch), then advance cursor past the violation end (skip the bad part). <strong>clip.subclip()</strong> is lazy — no data is copied until write_videofile(). <strong>write_videofile()</strong> does the actual encoding, which takes time for long videos.',
+        },
+        {
+          type:'build',
+          title:'Write export_flagged_clips(video_path, violations, job_id)',
+          desc:'Extracts each flagged segment as its own video file, then zips them all.',
+          code:'import zipfile, os\nfrom moviepy.editor import VideoFileClip\n\ndef export_flagged_clips(video_path, violations, job_id):\n    clip = VideoFileClip(video_path)\n    clips_dir = f"tmp/clips/{job_id}"\n    os.makedirs(clips_dir, exist_ok=True)\n    paths = []\n    for i, v in enumerate(violations, 1):\n        out = f"{clips_dir}/{i:02d}_{v[\'type\']}_{v[\'start_time\']:.1f}s.mp4"\n        clip.subclip(v["start_time"], v["end_time"])\\\n            .write_videofile(out, codec="libx264", audio_codec="aac", logger=None)\n        paths.append(out)\n    clip.close()\n    zip_path = f"tmp/exports/{job_id}_clips.zip"\n    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:\n        for p in paths:\n            z.write(p, arcname=os.path.basename(p))\n    return zip_path',
+          explain:'<strong>enumerate(violations, 1)</strong> gives index starting from 1 and the item — so you can number clips 01, 02, etc. <strong>01_violence_12.4s.mp4</strong> — a descriptive filename so the editor immediately knows what each clip is without opening it. <strong>zipfile.ZipFile(zip_path, "w", ZIP_DEFLATED)</strong> — w = write mode (create new), ZIP_DEFLATED = use compression. <strong>z.write(p, arcname=os.path.basename(p))</strong> — arcname sets the filename inside the zip. Without it the full path /tmp/clips/... would be stored.',
+        },
+        {
+          type:'build',
+          title:'Add /export/video and /export/clips endpoints to FastAPI',
+          desc:'Both return file downloads. The frontend triggers these when the user clicks a download button.',
+          code:'@app.get("/export/{job_id}/video")\ndef export_video(job_id: str):\n    # load violations and decisions from saved state\n    accepted = [v for v in violations if decisions.get(v["id"])=="accepted"]\n    path = export_clean_video(video_path, accepted, f"tmp/exports/{job_id}_clean.mp4")\n    return FileResponse(path, filename=f"{job_id}_clean.mp4")\n\n@app.get("/export/{job_id}/clips")\ndef export_clips(job_id: str):\n    accepted = [v for v in violations if decisions.get(v["id"])=="accepted"]\n    path = export_flagged_clips(video_path, accepted, job_id)\n    return FileResponse(path, filename=f"{job_id}_flagged_clips.zip")',
+          explain:'<strong>FileResponse(path, filename=...)</strong> — FileResponse reads the file and sends it as the HTTP response body. The <strong>filename</strong> parameter sets the Content-Disposition header which tells the browser what to name the downloaded file. Without it, the browser might call it the last part of the URL path. The line <strong>[v for v in violations if decisions.get(v["id"])=="accepted"]</strong> filters to only the violations the user accepted — dismissed violations are excluded.',
+        },
+        {
+          type:'build',
+          title:'Add download buttons in React — one per format',
+          desc:'After all violations are reviewed, show a row of download buttons that trigger file downloads.',
+          code:'function download(format) {\n  window.location.href =\n    "http://localhost:8000/export/" + jobId + "/" + format\n}\n\n<button onClick={() => download("video")}>Download clean video</button>\n<button onClick={() => download("clips")}>Download flagged clips ZIP</button>',
+          explain:'<strong>window.location.href = URL</strong> — setting this triggers the browser to navigate to that URL. When FastAPI returns a FileResponse with the right Content-Disposition header, the browser sees it as a file download and saves it locally instead of navigating. This is the simplest way to trigger file downloads from a React app — no fetch() needed. The URL contains the job_id so the server knows which video\'s export to generate.',
+        },
+      ]
+    },
+    {
+      tag:'Week 11',name:'SRT + PDF + EDL + XML exports',
+      concepts:['SRT subtitle format','ReportLab PDF','CMX3600 EDL','FCPXML','Jinja2 templates'],
+      newConcepts:['SRT format','ReportLab','EDL','FCPXML','Jinja2'],
+      resources:[
+        {label:'ReportLab user guide',url:'https://docs.reportlab.com/reportlab/userguide/ch1_intro/'},
+        {label:'SRT format spec',url:'https://en.wikipedia.org/wiki/SubRip'},
+        {label:'Jinja2 intro',url:'https://jinja.palletsprojects.com/en/3.1.x/intro/'},
+      ],
+      tasks:[
+        {
+          type:'install',
+          title:'Install ReportLab and Jinja2',
+          desc:'',
+          code:'pip install reportlab Jinja2',
+          explain:'<strong>ReportLab</strong> is the standard Python library for generating PDF files. You build a document by creating a list of flowable elements (Paragraph, Table, Spacer, Image) then call doc.build() and it produces a PDF file. <strong>Jinja2</strong> is a templating engine — you write a template with {{variable}} placeholders and it fills them in with real data. You will use it to generate the FCPXML export from a reusable XML template.',
+        },
+        {
+          type:'build',
+          title:'Write export_srt(violations, output_path)',
+          desc:'SRT is a simple text format. Each violation becomes one subtitle cue with a timecode range and text.',
+          code:'def export_srt(violations, output_path):\n    def tc(s):\n        h,m=int(s//3600),int((s%3600)//60)\n        sec,ms=int(s%60),int((s%1)*1000)\n        return f"{h:02d}:{m:02d}:{sec:02d},{ms:03d}"\n    lines = []\n    for i, v in enumerate(violations, 1):\n        lines += [str(i),\n                  f"{tc(v[\'start_time\'])} --> {tc(v[\'end_time\'])}",\n                  f"[{v[\'type\'].upper()}: {v[\'label\']} - {int(v[\'confidence\']*100)}%]",\n                  ""]\n    with open(output_path, "w", encoding="utf-8") as f:\n        f.write("\\n".join(lines))\n    return output_path',
+          explain:'SRT format is four things repeated: (1) index number, (2) timecode range using <strong>comma</strong> for milliseconds not period — 00:01:12,500 not 00:01:12.500, (3) the subtitle text, (4) blank line. The tc() helper converts a float like 72.5 to 00:01:12,500. Math: 72//3600=0 hours, 72%3600//60=1 minute, 72%60=12 seconds, 0.5*1000=500ms. <strong>encoding="utf-8"</strong> — always specify UTF-8 when writing text files in case labels contain special characters.',
+        },
+        {
+          type:'build',
+          title:'Write export_pdf(violations, metadata) using ReportLab',
+          desc:'A professional PDF compliance report with a header, metadata table, and violations table.',
+          code:'from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer\nfrom reportlab.lib.styles import getSampleStyleSheet\nfrom reportlab.lib import colors\nfrom reportlab.lib.pagesizes import A4\n\ndef export_pdf(violations, metadata, job_id, platform, output_path):\n    doc = SimpleDocTemplate(output_path, pagesize=A4)\n    styles = getSampleStyleSheet()\n    story = []\n    story.append(Paragraph("ReelPatch Compliance Report", styles["Title"]))\n    story.append(Spacer(1, 12))\n    rows = [["#","Timestamp","Type","Confidence","Label"]]\n    for i, v in enumerate(violations, 1):\n        rows.append([str(i), f"{v[\'start_time\']:.1f}s",\n                     v["type"].upper(),\n                     f"{int(v[\'confidence\']*100)}%",\n                     v["label"]])\n    t = Table(rows, colWidths=[25,80,70,70,235])\n    t.setStyle(TableStyle([\n        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#1e293b")),\n        ("TEXTCOLOR",(0,0),(-1,0),colors.white),\n        ("FONTSIZE",(0,0),(-1,-1),9),\n        ("GRID",(0,0),(-1,-1),0.25,colors.lightgrey)]))\n    story.append(t)\n    doc.build(story)\n    return output_path',
+          explain:'ReportLab uses a <strong>story metaphor</strong> — you build a list of flowable objects and call doc.build(story). ReportLab handles pagination automatically. <strong>Paragraph</strong> is text with style. <strong>Spacer(1, 12)</strong> adds 12 points of vertical space. <strong>Table(rows)</strong> takes a 2D list — first row becomes headers. TableStyle coordinates: <strong>(col, row)</strong> where (0,0) is top-left and (-1,-1) is bottom-right. <strong>("BACKGROUND",(0,0),(-1,0))</strong> means all columns (0 to -1), first row (0 to 0) — the entire header row.',
+        },
+        {
+          type:'build',
+          title:'Write export_edl(violations, video_filename, output_path)',
+          desc:'CMX3600 EDL is a plain text format every professional NLE understands.',
+          code:'def export_edl(violations, filename, output_path):\n    def tc(s, fps=25):\n        h,m=int(s//3600),int((s%3600)//60)\n        sec,fr=int(s%60),int((s%1)*fps)\n        return f"{h:02d}:{m:02d}:{sec:02d}:{fr:02d}"\n    lines = ["TITLE: ReelPatch Export","FCM: NON-DROP FRAME",""]\n    for i, v in enumerate(violations, 1):\n        ti, to = tc(v["start_time"]), tc(v["end_time"])\n        lines += [\n            f"{i:03d}  AX  V  C  {ti} {to} {ti} {to}",\n            f"* FROM CLIP NAME: {filename}",\n            f"* REELPATCH: {v[\'type\'].upper()} | {int(v[\'confidence\']*100)}% | {v[\'label\']}",\n            ""]\n    with open(output_path, "w") as f:\n        f.write("\\n".join(lines))\n    return output_path',
+          explain:'CMX3600 EDL is a format from the 1970s still used because it is universal. Each entry has: event number, reel name (AX), track type (V=video), cut type (C=cut), source in, source out, record in, record out. The same timecode appears twice — source clip in/out and destination timeline in/out. Lines starting with <strong>*</strong> are comments — ReelPatch uses them to embed violation metadata. Professional editors can import this into Premiere, Avid, Final Cut — any NLE — and see both the edit points and the ReelPatch notes.',
+        },
+        {
+          type:'build',
+          title:'Write export_xml(violations) — Premiere Pro FCPXML with markers',
+          desc:'FCPXML is more powerful than EDL — violations appear as coloured markers directly on the Premiere timeline.',
+          code:'from jinja2 import Template\n\nFCPXML_TEMPLATE = """\n<?xml version="1.0" encoding="UTF-8"?>\n<fcpxml version="1.9">\n  <resources>\n    <asset id="r1" src="{{ video_path }}" />\n  </resources>\n  <library><event><project><sequence>\n    <spine><asset-clip ref="r1" duration="{{ duration }}s">\n      {% for v in violations %}\n      <marker start="{{ v.start_time }}s"\n              duration="{{ v.end_time - v.start_time }}s"\n              value="{{ v.type }}: {{ v.label }}" />\n      {% endfor %}\n    </asset-clip></spine>\n  </sequence></event></library>\n</fcpxml>\n"""\n\ndef export_xml(violations, video_path, duration, output_path):\n    xml = Template(FCPXML_TEMPLATE).render(\n        video_path=video_path, duration=duration, violations=violations)\n    with open(output_path, "w") as f:\n        f.write(xml)\n    return output_path',
+          explain:'<strong>Jinja2 Template</strong> takes a string with {{variable}} placeholders and {% for %} loops. <strong>.render(key=value)</strong> substitutes real values into the template. This is cleaner than building XML with string concatenation — the template stays readable and the Python logic stays clean. The FCPXML format is what Premiere Pro uses for its project files. Importing this XML creates a sequence with markers at each violation timestamp, coloured and labelled automatically.',
+        },
+        {
+          type:'build',
+          title:'Add all export endpoints + download buttons for every format',
+          desc:'Wire up /export/{job_id}/srt, /pdf, /edl, /xml. Add download buttons in React for all five formats.',
+          explain:'At this point you have 5 export formats. Add a route for each in FastAPI and a matching button in React. Test every single format downloads and opens correctly in the appropriate app: JSON in a text editor, SRT in a subtitle editor, PDF in Preview, EDL in a text editor (and ideally import into Premiere), XML in Premiere. If any format is wrong it will fail silently — test each one manually.',
+        },
+      ]
+    },
+  ]
+},
+{
+  id:'p5',color:'#a78bfa',bg:'rgba(167,139,250,0.1)',
+  num:'05',name:'Editor Extensions',
+  desc:'The feature that wins the hackathon. Push violation markers directly into Premiere Pro and DaVinci Resolve\'s native timelines. No existing compliance tool does this.',
+  time:'5-6 hrs build / ~3 weeks learn+build',diff:'Advanced',
+  deliverables:[
+    'Premiere Pro UXP panel pushing coloured markers onto the timeline',
+    '.reelpatch project file format',
+    'DaVinci Resolve Python script adding markers from scan results',
+    'Live demo: open Premiere, run panel, markers appear in real time',
+  ],
+  weeks:[
+    {
+      tag:'Week 12',name:'.reelpatch file format + DaVinci Resolve script',
+      concepts:['.reelpatch file format','DaVinci Python API','resolve object hierarchy','timeline.AddMarker()'],
+      newConcepts:['custom file extension','DaVinci Resolve scripting','resolve.GetProjectManager()'],
+      resources:[
+        {label:'DaVinci Resolve Python API',url:'https://deric.github.io/DaVinciResolve-API-Docs/'},
+        {label:'DaVinci scripting setup',url:'https://www.steakunderwater.com/wesuckless/viewtopic.php?t=3220'},
+      ],
+      tasks:[
+        {
+          type:'build',
+          title:'Design the .reelpatch project file format',
+          desc:'A .reelpatch file is just JSON with a custom extension. It stores the whole session: video path, platform, violations, and decisions.',
+          code:'{\n  "reelpatch_version": "1.0",\n  "created_at": "2026-04-03T10:23:00",\n  "video_path": "/Users/dhruv/Desktop/clip.mp4",\n  "platform": "youtube",\n  "metadata": {"duration": 127.5, "width": 1920, "height": 1080},\n  "violations": [ { "id": "...", "type": "violence", ... } ],\n  "decisions": { "viol-uuid-1": "accepted", "viol-uuid-2": "dismissed" }\n}',
+          explain:'The .reelpatch extension is just a convention — the OS treats it as a plain JSON file. You register your app to open these files and it reads them as JSON, restoring the session state. This lets creators save their review progress, share it with teammates, and reopen it later. The editor extensions can also load .reelpatch files directly to add markers without calling the API — useful offline. The file format IS the portability.',
+        },
+        {
+          type:'build',
+          title:'Add /export/reelpatch endpoint — save the full session',
+          desc:'Returns the current scan state as a .reelpatch file download.',
+          code:'import json\nfrom fastapi.responses import Response\n\n@app.post("/export/{job_id}/reelpatch")\ndef export_reelpatch(job_id: str, body: ExportBody):\n    data = {\n        "reelpatch_version": "1.0",\n        "video_path": body.video_path,\n        "platform": body.platform,\n        "metadata": body.metadata,\n        "violations": body.violations,\n        "decisions": body.decisions\n    }\n    content = json.dumps(data, indent=2)\n    return Response(\n        content=content,\n        media_type="application/json",\n        headers={"Content-Disposition": f\'attachment; filename="{job_id}.reelpatch"\'}\n    )',
+          explain:'<strong>json.dumps(data, indent=2)</strong> converts the Python dict to a formatted JSON string. <strong>Response(...)</strong> with a custom Content-Disposition header is how you force a browser download of arbitrary content. <strong>filename="{job_id}.reelpatch"</strong> — the .reelpatch extension tells your app (and the user) what kind of file this is. The file is just JSON internally but the custom extension gives it identity and intent.',
+        },
+        {
+          type:'setup',
+          title:'Set up DaVinci Resolve scripting on Mac',
+          desc:'DaVinci has a built-in Python scripting API. Enable it in Preferences and add the module path.',
+          code:'# 1. In DaVinci Resolve:\n#    Preferences > System > General\n#    Enable: External scripting using network\n\n# 2. In your Python script:\nimport sys\nsys.path.insert(0,\n  "/Library/Application Support/Blackmagic Design"\n  "/DaVinci Resolve/Developer/Scripting/Modules")\nimport DaVinciResolveScript as dvr\n\n# 3. Test the connection:\nresolve = dvr.scriptapp("Resolve")\nprint(resolve)  # prints the Resolve object if DaVinci is open',
+          explain:'DaVinci Resolve runs a local scripting server when open. Your Python connects to it through the DaVinciResolveScript module. <strong>sys.path.insert(0, path)</strong> adds a directory to Python\'s module search path — this is how you import modules that aren\'t installed via pip. The path points to where Blackmagic installs its Python bindings. <strong>dvr.scriptapp("Resolve")</strong> connects to the running DaVinci instance. If DaVinci isn\'t open this returns None — always check for None before calling any methods on it.',
+        },
+        {
+          type:'learn',
+          title:'Learn the DaVinci API hierarchy — resolve > project > timeline',
+          desc:'You navigate a chain of objects to reach the timeline. Each step gets you closer.',
+          code:'resolve  = dvr.scriptapp("Resolve")\npm       = resolve.GetProjectManager()\nproject  = pm.GetCurrentProject()\ntimeline = project.GetCurrentTimeline()\nfps      = float(timeline.GetSetting("timelineFrameRate"))\n\n# Convert seconds to frame number:\nframe = int(timestamp_seconds * fps)',
+          explain:'The DaVinci API is a <strong>hierarchy of objects</strong>: the Resolve app contains a project manager, which contains projects, which contain timelines. You navigate step by step — you cannot jump directly to the timeline. <strong>GetCurrentTimeline()</strong> returns whichever timeline is currently open in DaVinci\'s UI. <strong>GetSetting("timelineFrameRate")</strong> returns fps as a string (e.g. "25") — always convert to float. DaVinci works in frames, not seconds, so you must convert: frame = seconds * fps.',
+        },
+        {
+          type:'build',
+          title:'Write add_markers_to_davinci(violations) script',
+          desc:'Connects to DaVinci, gets the active timeline, adds a coloured marker for each violation.',
+          code:'COLORS = {\n  "violence": "Red", "nsfw": "Orange",\n  "copyright": "Yellow", "profanity": "Purple"\n}\n\ndef add_markers_to_davinci(violations):\n    resolve = dvr.scriptapp("Resolve")\n    if not resolve:\n        raise Exception("Open DaVinci Resolve first")\n    timeline = resolve.GetProjectManager()\\\n                      .GetCurrentProject()\\\n                      .GetCurrentTimeline()\n    fps = float(timeline.GetSetting("timelineFrameRate"))\n    for v in violations:\n        frame = int(v["start_time"] * fps)\n        dur   = max(1, int((v["end_time"]-v["start_time"]) * fps))\n        timeline.AddMarker(frame, COLORS[v["type"]],\n                           v["type"].upper(),\n                           str(int(v["confidence"]*100)) + "% confidence",\n                           dur)\n    print(f"Added {len(violations)} markers")',
+          explain:'<strong>timeline.AddMarker(frame, color, name, note, duration)</strong> — all 5 arguments are required. <strong>frame</strong> is position from timeline start in frames (not seconds). <strong>color</strong> must be an exact string — Red, Orange, Yellow, Green, Cyan, Blue, Purple, Pink. A typo silently fails. <strong>name</strong> appears in the marker tooltip. <strong>note</strong> is the description. <strong>duration</strong> is the marker length in frames — use max(1, ...) so it is never zero. This function is what makes the demo magical: Python you wrote is controlling a professional NLE in real time.',
+        },
+        {
+          type:'test',
+          title:'Test: open DaVinci with a project, run the script, watch markers appear',
+          desc:'Have DaVinci open with a timeline. Run your Python script. Coloured markers appear at violation timestamps. Right-click one to see its note.',
+          explain:'This test IS the demo. When you see Python you wrote adding markers to a real DaVinci timeline, the whole thing clicks. It is also the most likely place to hit errors: DaVinci not open (resolve is None), wrong fps (markers in wrong position), invalid color string (marker silently not added). Debug each one. The test only passes when markers appear at exactly the right positions for a known video.',
+        },
+      ]
+    },
+    {
+      tag:'Week 13',name:'Premiere Pro UXP panel',
+      concepts:['Adobe UXP','manifest.json','Premiere scripting API','sequence.markers.createMarker()'],
+      newConcepts:['Adobe UXP','manifest.json','Premiere Pro scripting'],
+      resources:[
+        {label:'Adobe UXP for Premiere',url:'https://developer.adobe.com/premiere-pro/uxp/'},
+        {label:'Premiere scripting API',url:'https://ppro-scripting.docsforadobe.com/'},
+        {label:'UXP samples',url:'https://github.com/AdobeDocs/uxp-premiere-pro-samples'},
+      ],
+      tasks:[
+        {
+          type:'setup',
+          title:'Enable unsigned extensions in Premiere Pro',
+          desc:'This terminal command disables Premiere\'s extension signature check so you can load your development panel.',
+          code:'defaults write com.adobe.CSXS.11 PlayerDebugMode 1\n# Restart Premiere Pro after running this',
+          explain:'<strong>defaults write</strong> is a macOS command that writes to the system preferences database. <strong>com.adobe.CSXS.11</strong> is Adobe\'s preference domain for their extension system. <strong>PlayerDebugMode 1</strong> disables the signature verification check. Without this, Premiere refuses to load any extension that isn\'t signed with an Adobe certificate (which costs money). The 11 is the CSXS version number — if you are on a very new Premiere version, try 12 or 13.',
+        },
+        {
+          type:'learn',
+          title:'Learn: what is a UXP extension? How is it different from a plugin?',
+          desc:'A UXP extension is an HTML/CSS/JS page that runs inside Premiere as a panel — like a mini website embedded in the app. It can call the Premiere scripting API to read and modify the active project.',
+          explain:'Think of it as a tiny browser tab living inside Premiere. The panel is your index.html file — standard HTML, CSS, and JavaScript. Premiere renders it in a Chromium-based engine. The special part is <strong>require("premierepro")</strong> — a module injected by Premiere that gives your JavaScript access to the Premiere application object. You can read the active sequence, add markers, apply effects, and more. This is the integration that makes ReelPatch feel native to editors.',
+        },
+        {
+          type:'build',
+          title:'Create the extension folder structure and manifest.json',
+          desc:'Premiere needs a manifest.json to know your panel exists. Get this structure exactly right.',
+          code:'# Folder: premiere-extension/\n#   manifest.json\n#   index.html\n#   index.js\n\n# manifest.json:\n{\n  "manifestVersion": 5,\n  "id": "com.reelpatch.panel",\n  "name": "ReelPatch",\n  "version": "1.0.0",\n  "main": "index.html",\n  "host": [{"app": "PPRO", "minVersion": "22.0"}],\n  "entrypoints": [{\n    "type": "panel",\n    "id": "reelpatch-panel",\n    "label": {"default": "ReelPatch"},\n    "minimumSize": {"width": 300, "height": 400}\n  }],\n  "permissions": {\n    "network": {"domains": ["http://localhost:8000"]}\n  }\n}',
+          explain:'<strong>manifest.json</strong> is the panel\'s passport. <strong>id: com.reelpatch.panel</strong> — a unique reverse-DNS identifier, must not clash with other extensions. <strong>host: [{app: PPRO}]</strong> — PPRO is Premiere Pro\'s app code. This panel only works in Premiere. <strong>main: index.html</strong> — Premiere renders this file when the panel opens. <strong>permissions.network.domains</strong> — UXP panels are sandboxed. You must explicitly list every domain your JavaScript is allowed to fetch from. Without listing localhost:8000 your API calls will be blocked silently.',
+        },
+        {
+          type:'build',
+          title:'Build the panel UI — index.html with Scan button and violation list',
+          desc:'The panel is an HTML page inside Premiere. Build the interface with a scan button and a results list.',
+          code:'<!-- index.html -->\n<style>\n  body { background: #1e1e1e; color: #ccc; font-size:13px; padding:16px; }\n  button { background: #0066cc; color:white; border:none;\n           padding:10px; border-radius:6px; width:100%; cursor:pointer; }\n  .viol { background:#2a2a2a; border-radius:6px; padding:10px;\n          margin:6px 0; border-left:3px solid #ef4444; }\n  .viol.nsfw      { border-color:#f97316; }\n  .viol.profanity { border-color:#a855f7; }\n  .viol.copyright { border-color:#eab308; }\n  #status { color:#888; font-size:11px; margin:8px 0; }\n</style>\n<h3 style="color:#fff;margin:0 0 12px">ReelPatch</h3>\n<button onclick="scanVideo()">Scan Active Sequence</button>\n<div id="status">Ready. Open a sequence then click Scan.</div>\n<div id="list"></div>\n<script src="index.js"><\/script>',
+          explain:'This HTML renders inside Premiere\'s panel iframe. It is a real Chromium browser environment — standard HTML, CSS, and JavaScript all work exactly as in a normal webpage. The dark background (#1e1e1e) matches Premiere\'s own dark UI so the panel looks native. The coloured left border on each violation card is the same colour scheme as the timeline bands in Phase 3 — consistency helps editors instantly recognise violation types across both views.',
+        },
+        {
+          type:'build',
+          title:'Write index.js — scan the active sequence and push markers',
+          desc:'JavaScript that gets the current video path from Premiere, calls your ReelPatch backend, and adds markers.',
+          code:'const { app } = require("premierepro")\n\nasync function scanVideo() {\n  document.getElementById("status").textContent = "Getting sequence path...";\n  const project  = app.getCurrentProject()\n  const sequence = project.getActiveSequence()\n  const filePath = sequence.videoTracks[0].clips[0]\n                           .projectItem.getMediaPath()\n\n  document.getElementById("status").textContent = "Scanning with ReelPatch...";\n  const fd = new FormData()\n  fd.append("file_path", filePath)\n  fd.append("platform", "youtube")\n  const res  = await fetch("http://localhost:8000/scan-by-path", {method:"POST",body:fd})\n  const data = await res.json()\n  await addMarkersToSequence(sequence, data.violations)\n  document.getElementById("status").textContent =\n    data.violations.length + " violations found";\n}\n\nasync function addMarkersToSequence(sequence, violations) {\n  for (const v of violations) {\n    const marker = sequence.markers.createMarker(v.start_time)\n    marker.setTypeAsComment()\n    marker.name = v.type.toUpperCase()\n    marker.comments = Math.round(v.confidence*100) + "% - " + v.label\n  }\n}',
+          explain:'<strong>require("premierepro")</strong> — this is a special UXP module injected by Premiere, not an npm package. <strong>sequence.videoTracks[0].clips[0].projectItem.getMediaPath()</strong> navigates the Premiere project hierarchy to get the source file path of the first clip on the first video track. <strong>sequence.markers.createMarker(v.start_time)</strong> adds a marker at that timestamp in seconds. <strong>marker.setTypeAsComment()</strong> makes it a Comment marker — the standard type editors use. <strong>marker.comments</strong> is the note text — editors see this when hovering over the marker.',
+        },
+        {
+          type:'test',
+          title:'Live demo test: Premiere open, panel loads, Scan runs, markers appear',
+          desc:'Open Premiere with a project. Open Window > Extensions > ReelPatch. Click Scan. Watch markers appear on the native timeline.',
+          explain:'This is your hackathon demo moment. Practice until it is flawless: switch to Premiere (already open), Window > Extensions > ReelPatch, click Scan, wait 10-20 seconds, coloured markers appear. Most judges will never have seen a third-party tool control a professional NLE in real time. Rehearse it enough times that you can demo it smoothly under pressure. If the panel doesn\'t load, check: debug mode is on, manifest.json is in the right folder, Premiere was restarted after enabling debug mode.',
+        },
+      ]
+    },
+    {
+      tag:'Week 14',name:'Polish + hackathon demo prep',
+      concepts:['error handling','loading states','demo scripting','pitch structure'],
+      newConcepts:['demo engineering'],
+      resources:[
+        {label:'HackByte 4.0',url:'https://hackbyte.in'},
+      ],
+      tasks:[
+        {
+          type:'build',
+          title:'Add loading states and error handling to every async operation',
+          desc:'Every button that triggers scan, export, or marker push must show a loading state and handle errors gracefully.',
+          code:'const [loading, setLoading] = useState(false)\nconst [error, setError] = useState(null)\n\nasync function doOperation() {\n  setLoading(true); setError(null)\n  try {\n    await someAsyncCall()\n  } catch (err) {\n    setError(err.message || "Something went wrong")\n  } finally {\n    setLoading(false)\n  }\n}',
+          explain:'<strong>try/catch/finally</strong> — try runs your code, catch handles any thrown error, finally ALWAYS runs (used to stop the spinner even when errors occur). <strong>setError(null)</strong> at the start clears any previous error before trying again. <strong>err.message</strong> shows the actual error text — more useful than a generic message. This pattern prevents the worst demo failure: a crash with no UI feedback, leaving judges staring at a frozen screen.',
+        },
+        {
+          type:'build',
+          title:'Test the full end-to-end flow 5 times on 3 different videos',
+          desc:'Every step must work: upload > scan > timeline > click markers > thumbnail > accept/dismiss > export all formats > Premiere markers.',
+          explain:'Test on 3 different videos: a normal video, a very short video (under 10 seconds — tests edge cases), and a video with no violations (tests empty state handling). Each should work without errors. The 5th run should be your dress rehearsal — do it exactly as you would on stage, including switching to Premiere at the end for the marker reveal. Judges will test edge cases deliberately to see how your app handles them.',
+        },
+        {
+          type:'build',
+          title:'Prepare a 90-second backup demo recording',
+          desc:'Record yourself doing the full demo. Keep it ready in case of internet issues or API failures on stage.',
+          explain:'Every hackathon demo has Murphy\'s Law working against it: WiFi drops, API rate limits hit, your laptop crashes at the critical moment. A recorded video backup is your insurance. Record it when everything is working perfectly. Keep it open in a separate tab or QuickTime. If anything goes wrong during the live demo, seamlessly switch to the recording. Judges respect teams that stay composed under pressure.',
+        },
+        {
+          type:'ship',
+          title:'Write and rehearse your pitch opening',
+          desc:'From the guide: open with the pain, not the product. Your first 20 seconds determine whether judges are engaged.',
+          code:'// Opening line (from the guide):\n// "Every day, thousands of videos get\n//  demonetised or removed after upload.\n//  The creator loses revenue, wastes hours,\n//  and has no idea why."\n//\n// Then: "ReelPatch patches that gap."\n// Use the theme: "Patch the Reality"',
+          explain:'Judges see 20+ projects in one day. The ones they remember made them feel the problem. <strong>Opening with pain</strong> — "thousands of videos get demonetised" — creates scale and frustration before you say a single word about your solution. By the time you say "ReelPatch", they are already rooting for you. <strong>Use the word patch twice</strong>: in your app name and in your opening line connecting to the HackByte theme "Patch the Reality". Judges subconsciously score theme alignment and you lock it in before the first slide.',
+        },
+        {
+          type:'ship',
+          title:'Save the Premiere / DaVinci marker reveal for the very end',
+          desc:'Structure your demo: upload > scan > timeline > exports > THEN open Premiere and push markers as the final reveal.',
+          explain:'The marker reveal is your strongest moment — most judges will never have seen anything like it. If you show it first, everything after is anticlimactic. Save it for last so it is the final impression. The ideal sequence: explain the problem (20s), show the scan running (30s), click through the timeline (20s), show an export (10s), then say "and we have one more thing" and switch to Premiere. The markers appearing on a real professional timeline in real time is the demo that wins.',
+        },
+        {
+          type:'ship',
+          title:'Final commit and push. Good luck, Dhruv.',
+          desc:'You built this from scratch. Every line traces back to basic Python and zero web experience. That is the whole point.',
+          code:'git add .\ngit commit -m "ReelPatch v1.0 - HackByte 4.0"\ngit push origin main\n# 9.6 / 10 - ReelPatch it.',
+          explain:'You started with basic Python and no web experience. You ended with a full-stack AI application, three detection engines running in parallel, an interactive timeline UI, five export formats, a native Premiere Pro panel, and a DaVinci Resolve script. Each week you learned only what the current build needed — nothing wasted, nothing premature. That is the right way to learn software engineering. Now go show it.',
+        },
+      ]
+    },
+  ]
+},
+];
+
+let progress = {}, currentPhase = 'p1';
+
+async function loadProgress(){try{const r=await window.storage.get('rp2_progress');return r?JSON.parse(r.value):{}}catch{return {}}}
+async function saveProgress(p){try{await window.storage.set('rp2_progress',JSON.stringify(p))}catch{}}
+
+function counts(phId){const ph=PHASES.find(p=>p.id===phId);let d=0,t=0;for(const w of ph.weeks)for(const tk of w.tasks){t++;if(progress[key(phId,w,tk)])d++;}return{d,t};}
+function key(phId,wk,tk){return`${phId}||${wk.tag}||${tk.title}`;}
+function allCounts(){let d=0,t=0;for(const ph of PHASES){const c=counts(ph.id);d+=c.d;t+=c.t;}return{d,t};}
+
+function renderNav(){
+  const nav=document.getElementById('nav');
+  nav.innerHTML='';
+  PHASES.forEach(ph=>{
+    const{d,t}=counts(ph.id);
+    const pct=t?Math.round(d/t*100):0;
+    const el=document.createElement('div');
+    el.className='nav-item'+(ph.id===currentPhase?' active':'');
+    el.style.borderLeftColor=ph.id===currentPhase?ph.color:'transparent';
+    el.innerHTML=`<div class="ni-dot" style="background:${ph.color}"></div>
+    <div class="ni-body">
+      <div class="ni-name" style="color:${ph.id===currentPhase?ph.color:'var(--text)'}">${ph.num} — ${ph.name}</div>
+      <div class="ni-meta">${d}/${t} · ${pct}%</div>
+      <div class="ni-bar"><div class="ni-bfill" style="width:${pct}%;background:${ph.color}"></div></div>
+    </div>`;
+    el.onclick=()=>{currentPhase=ph.id;renderNav();renderMain();document.getElementById('main').scrollTop=0;};
+    nav.appendChild(el);
+  });
+}
+
+function updateOverall(){
+  const{d,t}=allCounts();
+  const pct=t?Math.round(d/t*100):0;
+  document.getElementById('ov-pct').textContent=pct+'%';
+  document.getElementById('ov-bar').style.width=pct+'%';
+  document.getElementById('ov-done').textContent=d+' done';
+  document.getElementById('ov-total').textContent=t+' tasks';
+}
+
+function renderMain(){
+  const ph=PHASES.find(p=>p.id===currentPhase);
+  const{d,t}=counts(ph.id);
+  const pct=t?Math.round(d/t*100):0;
+
+  let html=`<div class="ph-hero">
+    <div class="ph-badge" style="background:${ph.bg}">
+      <span class="ph-badge-num">${ph.num}</span>
+      <span class="ph-badge-icon" style="color:${ph.color}">◈</span>
+    </div>
+    <div class="ph-info">
+      <div class="ph-title">${ph.name}</div>
+      <div class="ph-desc">${ph.desc}</div>
+      <div class="ph-chips">
+        <span class="chip time">${ph.time}</span>
+        <span class="chip diff">${ph.diff}</span>
+      </div>
+    </div>
+  </div>
+  <div class="ph-pbar">
+    <span class="ppb-txt">Phase progress</span>
+    <div class="ppb-track"><div class="ppb-fill" id="ph-bar" style="width:${pct}%;background:${ph.color}"></div></div>
+    <span class="ppb-num" id="ph-count">${d} / ${t}</span>
+  </div>
+  <div class="deliverables">
+    <div class="deliv-label">Phase deliverables</div>
+    <div class="deliv-list">${ph.deliverables.map(d=>`<div class="deliv-item">${d}</div>`).join('')}</div>
+  </div>`;
+
+  ph.weeks.forEach((wk,wi)=>{
+    const wkDone=wk.tasks.filter(tk=>progress[key(ph.id,wk,tk)]).length;
+    const learnTags=wk.concepts.map(c=>`<span class="ls-tag${wk.newConcepts&&wk.newConcepts.includes(c)?' new':''}">${c}</span>`).join('');
+    const taskHtml=wk.tasks.map((tk,ti)=>{
+      const k=key(ph.id,wk,tk);
+      const done=progress[k]?' done':'';
+      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+      const exHtml = tk.explain ? '<div class="t-explain"><div class="t-explain-lbl">what\'s happening here</div><div class="t-explain-txt">'+tk.explain+'</div></div>' : '';
+      const codeHtml = tk.code
+        ? '<div class="t-code-wrap"><div class="t-code-hdr"><span class="t-code-lang">code / command</span></div><div class="t-code-body"><code>'+esc(tk.code)+'</code></div>'+exHtml+'</div>'
+        : (exHtml ? '<div class="t-explain-only">'+exHtml+'</div>' : '');
+      return`<div class="task-row${done}" id="tr-${ph.id}-${wi}-${ti}" onclick="toggleTask('${ph.id}',${wi},${ti})">
+        <div class="t-check"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#0c0e10" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="t-body">
+          <div class="t-title">${tk.title}</div>
+          <div class="t-desc">${tk.desc}</div>
+          ${codeHtml}
+          <div class="t-badges"><span class="t-type ${tk.type}">${tk.type}</span></div>
+        </div>
+      </div>`;
+    }).join('');
+    const resHtml=wk.resources&&wk.resources.length?`<div class="res-strip"><span class="res-lbl">learn →</span>${wk.resources.map(r=>`<a class="res-a" href="${r.url}" target="_blank">${r.label}</a>`).join('')}</div>`:'';
+
+    html+=`<div class="week-block">
+      <div class="week-hdr" onclick="toggleWeek('${ph.id}',${wi})">
+        <span class="wk-tag">${wk.tag}</span>
+        <span class="wk-name">${wk.name}</span>
+        <span class="wk-prog" id="wp-${ph.id}-${wi}">${wkDone}/${wk.tasks.length}</span>
+        <span class="wk-chev" id="wc-${ph.id}-${wi}">▶</span>
+      </div>
+      <div class="week-body" id="wb-${ph.id}-${wi}">
+        <div class="learn-strip">
+          <div class="ls-label">concepts this week <span style="color:var(--accent2);margin-left:6px;">★ = new to you</span></div>
+          <div class="ls-tags">${learnTags}</div>
+        </div>
+        <div class="task-list">${taskHtml}</div>
+        ${resHtml}
+      </div>
+    </div>`;
+  });
+  document.getElementById('main').innerHTML=html;
+}
+
+const _openEx=new Set();
+function toggleEx(e,eid){
+  e.stopPropagation();
+  const box=document.getElementById(eid);
+  const btn=document.getElementById('exbtn-'+eid);
+  if(_openEx.has(eid)){_openEx.delete(eid);box.classList.remove('open');btn.classList.remove('on');}
+  else{_openEx.add(eid);box.classList.add('open');btn.classList.add('on');}
+}
+function toggleWeek(phId,wi){
+  const b=document.getElementById(`wb-${phId}-${wi}`);
+  const c=document.getElementById(`wc-${phId}-${wi}`);
+  b.classList.toggle('open');c.classList.toggle('open');
+}
+
+function toggleTask(phId,wi,ti){
+  const ph=PHASES.find(p=>p.id===phId);
+  const wk=ph.weeks[wi];const tk=wk.tasks[ti];
+  const k=key(phId,wk,tk);
+  progress[k]=!progress[k];
+  saveProgress(progress);
+  const el=document.getElementById(`tr-${phId}-${wi}-${ti}`);
+  if(progress[k])el.classList.add('done');else el.classList.remove('done');
+  const wkDone=wk.tasks.filter(t2=>progress[key(phId,wk,t2)]).length;
+  document.getElementById(`wp-${phId}-${wi}`).textContent=`${wkDone}/${wk.tasks.length}`;
+  const{d,t}=counts(phId);
+  const pct=t?Math.round(d/t*100):0;
+  document.getElementById('ph-bar').style.width=pct+'%';
+  document.getElementById('ph-count').textContent=`${d} / ${t}`;
+  renderNav();updateOverall();
+}
+
+function confirmReset(){
+  if(confirm('Reset all progress?')){progress={};saveProgress(progress);renderNav();renderMain();updateOverall();}
+}
+
+async function init(){progress=await loadProgress();renderNav();renderMain();updateOverall();}
+init();
+</script>
+</body>
+</html>
